@@ -2,17 +2,27 @@ from tkinter import *
 
 root = Tk()
 root.title("AI Sudoku Solver")
-
 main_frame = Frame(root)
 Label(main_frame, text="Welcome User").grid(
     row=0, column=0, columnspan=5)
 
 cells = {}
 
+options = [
+    "9x9",
+    "12x12",
+    "16x16",
+    "25x25",
+    "100x100"
+]
+
+clicked = StringVar()
+
 
 def clear():
     for widgets in main_frame.winfo_children():
         widgets.destroy()
+    cells.clear()
 
 
 def change_colour(colour):
@@ -33,7 +43,7 @@ def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
 
 
 def draw_whole_grid(row, col, sub_row_num, sub_col_num):
-    # clear()
+    clear()
     colour = "#D0ffff"
     for row_num in range(0, row, sub_row_num):
         for col_num in range(0, col, sub_col_num):
@@ -43,9 +53,31 @@ def draw_whole_grid(row, col, sub_row_num, sub_col_num):
             colour = change_colour(colour)
 
 
+def submit():
+    match clicked.get():
+        case "9x9":
+            draw_whole_grid(9, 9, 3, 3)
+        case "12x12":
+            draw_whole_grid(12, 12, 3, 4)
+        case "16x16":
+            draw_whole_grid(16, 16, 4, 4)
+        case "25x25":
+            draw_whole_grid(25, 25, 5, 5)
+        case "100x100":
+            draw_whole_grid(100, 100, 10, 10)
+
+
+def drop_down_menu():
+    clicked.set(options[0])
+    drop = OptionMenu(main_frame, clicked, *options)
+    drop.pack()
+    button = Button(main_frame, text="Submit", command=submit, width=15)
+    button.pack()
+
+
 def create_sudoku():
     clear()
-    draw_whole_grid(25, 25, 5, 5)
+    drop_down_menu()
 
 
 def solve_heruistic():
