@@ -36,9 +36,9 @@ def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
     for i in range(sub_row_num):
         for j in range(sub_col_num):
             label = Label(frame, width=2, text=col_num+j+1,
-                          bg=bgcolour, justify="center")
+                          bg=bgcolour, justify="center", borderwidth=1, relief="solid")
             label.grid(row=i+1, column=j+1,
-                       sticky="nsew", padx=1, pady=1, ipady=2)
+                       sticky="nsew", ipady=2)
     frame.grid(row=row_num+1, column=col_num+1)
 
 
