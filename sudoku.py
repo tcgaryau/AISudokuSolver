@@ -1,7 +1,10 @@
 from tkinter import *
 
+
 root = Tk()
 root.title("AI Sudoku Solver")
+
+
 main_frame = Frame(root)
 Label(main_frame, text="Welcome User").grid(
     row=0, column=0, columnspan=5)
@@ -68,7 +71,8 @@ def submit():
 
 
 def drop_down_menu():
-    clicked.set(options[0])
+    btn_input_file = Button(main_frame, text="Choose File", width=15)
+    clicked.set("Select Options")
     drop = OptionMenu(main_frame, clicked, *options)
     drop.pack()
     button = Button(main_frame, text="Submit", command=submit, width=15)
