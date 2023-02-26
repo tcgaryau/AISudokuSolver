@@ -18,7 +18,7 @@ def drawSubGrid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
     frame = Frame(main_frame)
     for i in range(sub_row_num):
         for j in range(sub_col_num):
-            label = Label(frame, width=2, text=col_num+j + 1,
+            label = Label(frame, width=2, text=col_num+j+1,
                           bg=bgcolour, justify="center")
             label.grid(row=i+1, column=j+1,
                        sticky="nsew", padx=1, pady=1, ipady=2)
@@ -28,7 +28,7 @@ def drawSubGrid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
 
 def drawWholeGrid(row, col, sub_row_num, sub_col_num):
     colour = "#D0ffff"
-    for row_num in range(1, row + 1, sub_row_num):
+    for row_num in range(0, row, sub_row_num):
         for col_num in range(0, col, sub_col_num):
             drawSubGrid(row_num, col_num, sub_row_num, sub_col_num, colour)
             if colour == "#D0ffff":
@@ -60,5 +60,5 @@ btn_exit = Button(bottomFrame, text="Exit", width=15)
 btn_exit.grid(row=0, column=16)
 
 
-drawWholeGrid(16, 16, 4, 4)
+drawWholeGrid(9, 9, 3, 3)
 root.mainloop()
