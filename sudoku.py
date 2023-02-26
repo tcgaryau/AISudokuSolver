@@ -2,19 +2,26 @@ from tkinter import *
 
 root = Tk()
 root.title("AI Sudoku Solver")
-# Width x Height
 
+main_frame = Frame(root)
+Label(main_frame, text="Welcome User").grid(
+    row=0, column=0, columnspan=5)
 
 cells = {}
 
-main_frame = Frame(root)
-main_frame.pack(side=TOP)
 
-label = Label(main_frame, text="Welcome User").grid(
-    row=0, column=0, columnspan=5)
+def clear():
+    for widgets in main_frame.winfo_children():
+        widgets.destroy()
 
 
-def drawSubGrid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
+def change_colour(colour):
+    if colour == "#D0ffff":
+        return "#ffffd0"
+    return "#D0ffff"
+
+
+def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
     frame = Frame(main_frame)
     for i in range(sub_row_num):
         for j in range(sub_col_num):
@@ -22,43 +29,63 @@ def drawSubGrid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
                           bg=bgcolour, justify="center")
             label.grid(row=i+1, column=j+1,
                        sticky="nsew", padx=1, pady=1, ipady=2)
-            cells[(row_num+i+1, col_num+j+1)] = label
     frame.grid(row=row_num+1, column=col_num+1)
 
 
-def drawWholeGrid(row, col, sub_row_num, sub_col_num):
+def draw_whole_grid(row, col, sub_row_num, sub_col_num):
+    # clear()
     colour = "#D0ffff"
     for row_num in range(0, row, sub_row_num):
         for col_num in range(0, col, sub_col_num):
-            drawSubGrid(row_num, col_num, sub_row_num, sub_col_num, colour)
-            if colour == "#D0ffff":
-                colour = "#ffffd0"
-            else:
-                colour = "#D0ffff"
+            draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, colour)
+            colour = change_colour(colour)
         if sub_row_num % 2 == 0:
-            if colour == "#D0ffff":
-                colour = "#ffffd0"
-            else:
-                colour = "#D0ffff"
+            colour = change_colour(colour)
 
 
-bottomFrame = Frame(root)
-bottomFrame.pack(side=BOTTOM, pady=20)
-btn_create = Button(bottomFrame, text="Create Sudoku", width=15)
-btn_create.grid(row=0, column=0)
-
-btn_solve_heuristic = Button(bottomFrame, text="Solve (heuristic)", width=15)
-btn_solve_heuristic.grid(row=0, column=4)
-
-btn_solve_csp = Button(bottomFrame, text="Solve (CSP)", width=15)
-btn_solve_csp.grid(row=0, column=8)
-
-btn_clear = Button(bottomFrame, text="Solve (CSP)", width=15)
-btn_clear.grid(row=0, column=12)
-
-btn_exit = Button(bottomFrame, text="Exit", width=15)
-btn_exit.grid(row=0, column=16)
+def create_sudoku():
+    clear()
+    draw_whole_grid(25, 25, 5, 5)
 
 
-drawWholeGrid(9, 9, 3, 3)
-root.mainloop()
+def solve_heruistic():
+    if len(cells) == 0:
+        return
+    pass
+
+
+def solve_csp():
+    if len(cells) == 0:
+        return
+    pass
+
+
+def main():
+    main_frame.pack(side=TOP)
+
+    bottomFrame = Frame(root)
+
+    bottomFrame.pack(side=BOTTOM, pady=20)
+    btn_create = Button(bottomFrame, text="Create Sudoku",
+                        command=create_sudoku, width=15)
+    btn_create.grid(row=0, column=0)
+
+    btn_solve_heuristic = Button(
+        bottomFrame, text="Solve (heuristic)", command=solve_heruistic, width=15)
+    btn_solve_heuristic.grid(row=0, column=4)
+
+    btn_solve_csp = Button(bottomFrame, text="Solve (CSP)",
+                           command=solve_csp, width=15)
+    btn_solve_csp.grid(row=0, column=8)
+
+    btn_clear = Button(bottomFrame, text="Clear", command=clear, width=15)
+    btn_clear.grid(row=0, column=12)
+
+    btn_exit = Button(bottomFrame, text="Exit", command=exit, width=15)
+    btn_exit.grid(row=0, column=16)
+
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
