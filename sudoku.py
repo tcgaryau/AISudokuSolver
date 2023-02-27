@@ -60,7 +60,7 @@ def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
                                    text=f"{puzzle_data[i+row_num][j+col_num]}", font=(None, f'{width//sub_col_num//2}'), fill="black")
             else:
                 canvas.create_text(x + width/sub_col_num/2, y + height/sub_row_num/2,
-                                   text=f"{int((i+row_num)*(j+col_num))}", font=(None, f'{width//sub_col_num//2}'), fill="red")
+                                   text=f"{int((j+col_num+1))}", font=(None, f'{width//sub_col_num//2}'), fill="red")
     # end of segment
 
     # for i in range(sub_row_num):
@@ -101,10 +101,11 @@ def submit():
 
 
 def browseFiles():
-    label_file_explorer = Label(root,
+    label_file_explorer = Label(main_frame,
                                 text="File Explorer using Tkinter",
                                 width=100, height=4,
                                 fg="blue")
+    label_file_explorer.pack()
     filename = filedialog.askopenfilename(initialdir=os.getcwd,
                                           title="Select a File",
                                           filetypes=(("Text files",
@@ -114,10 +115,13 @@ def browseFiles():
 
     # Change label contents
     label_file_explorer.configure(text="File Opened: " + filename)
-    with open(filename, "r") as f:
-        file_data = f.read().strip()
-        global puzzle_data, size_data
-        puzzle_data, size_data = parse_input_file(file_data)
+    try:
+        with open(filename, "r") as f:
+            file_data = f.read().strip()
+            global puzzle_data, size_data
+            puzzle_data, size_data = parse_input_file(file_data)
+    except Exception as e:
+        print(e)
 
 
 def convert_from_dot_to_number(data):
