@@ -1,9 +1,10 @@
 from tkinter import *
 from tkinter import filedialog
+import os
 import math
 
 root = Tk()
-root.geometry("1200x1200")
+root.geometry("900x900")
 root.title("AI Sudoku Solver")
 
 
@@ -24,6 +25,7 @@ options = [
 
 clicked = StringVar()
 
+
 def clear():
     for widgets in main_frame.winfo_children():
         widgets.destroy()
@@ -42,19 +44,23 @@ def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
     # segment: use a canvas inside subframe
     width = 80
     height = 80
-    canvas = Canvas(frame, height=height, width=width, bg=bgcolour, bd=0, highlightthickness=0)
+    canvas = Canvas(frame, height=height, width=width,
+                    bg=bgcolour, bd=0, highlightthickness=0)
     canvas.pack(fill=BOTH, expand=False)
 
     for i in range(0, sub_row_num):
         for j in range(0, sub_col_num):
-            x = i * width/sub_row_num
-            y = j * height/sub_col_num
-            canvas.create_rectangle(x, y, x + width/sub_row_num, y + height/sub_col_num, outline='black')
+            x = j * width/sub_col_num
+            y = i * height/sub_row_num
+            canvas.create_rectangle(
+                x, y, x + width/sub_col_num, y + height/sub_row_num, outline='black')
             if puzzle_data:
                 print(puzzle_data)
-                canvas.create_text(x + width/sub_row_num/2, y + height/sub_col_num/2, text=f"{puzzle_data[i][j]}", font=(None, f'{width//sub_row_num//2}'), fill="black")
+                canvas.create_text(x + width/sub_col_num/2, y + height/sub_row_num/2,
+                                   text=f"{puzzle_data[i+row_num][j+col_num]}", font=(None, f'{width//sub_col_num//2}'), fill="black")
             else:
-                canvas.create_text(x + width/sub_row_num/2, y + height/sub_col_num/2, text=f"{int(i*j)}", font=(None, f'{width//sub_row_num//2}'), fill="red")
+                canvas.create_text(x + width/sub_col_num/2, y + height/sub_row_num/2,
+                                   text=f"{int((i+row_num)*(j+col_num))}", font=(None, f'{width//sub_col_num//2}'), fill="red")
     # end of segment
 
     # for i in range(sub_row_num):
@@ -90,8 +96,8 @@ def submit():
         case "100x100":
             draw_whole_grid(100, 100, 10, 10)
         case "Select Options":
-            draw_whole_grid(size_data, size_data, int(math.sqrt(size_data)), int(math.sqrt(size_data)))
-
+            draw_whole_grid(size_data, size_data, int(
+                math.sqrt(size_data)), int(math.sqrt(size_data)))
 
 
 def browseFiles():
@@ -99,7 +105,7 @@ def browseFiles():
                                 text="File Explorer using Tkinter",
                                 width=100, height=4,
                                 fg="blue")
-    filename = filedialog.askopenfilename(initialdir="/",
+    filename = filedialog.askopenfilename(initialdir=os.getcwd,
                                           title="Select a File",
                                           filetypes=(("Text files",
                                                       "*.txt"),
@@ -116,7 +122,8 @@ def browseFiles():
 
 def convert_from_dot_to_number(data):
     row_len = int(math.sqrt(len(data)))
-    input_array = [[int(data[(i+1)*(j+1)-1]) if data[(i+1)*(j+1)-1] != "." else 0 for i in range(row_len)] for j in range(row_len)]
+    input_array = [[int(data[(i+1)*(j+1)-1]) if data[(i+1)*(j+1)-1]
+                    != "." else 0 for i in range(row_len)] for j in range(row_len)]
     return input_array, row_len
 
 
@@ -126,7 +133,8 @@ def parse_input_file(data):
     else:
         data = data.split('\n')
         puzzle_size = len(data)
-        input_array = [[0 for _ in range(puzzle_size)] for _ in range(puzzle_size)]
+        input_array = [[0 for _ in range(puzzle_size)]
+                       for _ in range(puzzle_size)]
         for row_num, row in enumerate(data):
             for col_num, number in enumerate(row):
                 input_array[row_num][col_num] = int(number)
@@ -135,7 +143,8 @@ def parse_input_file(data):
 
 
 def drop_down_menu():
-    btn_input_file = Button(main_frame, text="Choose File", command=browseFiles, width=15)
+    btn_input_file = Button(main_frame, text="Choose File",
+                            command=browseFiles, width=15)
     btn_input_file.pack()
     clicked.set("Select Options")
     drop = OptionMenu(main_frame, clicked, *options)
