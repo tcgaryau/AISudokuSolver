@@ -121,6 +121,7 @@ def browseFiles():
             global puzzle_data, size_data
             puzzle_data, size_data = parse_input_file(file_data)
     except Exception as e:
+        label_file_explorer.destroy()
         print(e)
 
 
