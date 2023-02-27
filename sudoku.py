@@ -1,7 +1,8 @@
 from tkinter import *
-
+from tkinter import filedialog
 
 root = Tk()
+root.geometry("1200x1200")
 root.title("AI Sudoku Solver")
 
 
@@ -85,8 +86,25 @@ def submit():
             draw_whole_grid(100, 100, 10, 10)
 
 
+def browseFiles():
+    label_file_explorer = Label(root,
+                                text="File Explorer using Tkinter",
+                                width=100, height=4,
+                                fg="blue")
+    filename = filedialog.askopenfilename(initialdir="/",
+                                          title="Select a File",
+                                          filetypes=(("Text files",
+                                                      "*.txt*"),
+                                                     ("all files",
+                                                      "*.*")))
+
+    # Change label contents
+    label_file_explorer.configure(text="File Opened: " + filename)
+
+
 def drop_down_menu():
-    btn_input_file = Button(main_frame, text="Choose File", width=15)
+    btn_input_file = Button(main_frame, text="Choose File", command=browseFiles, width=15)
+    btn_input_file.pack()
     clicked.set("Select Options")
     drop = OptionMenu(main_frame, clicked, *options)
     drop.pack()
