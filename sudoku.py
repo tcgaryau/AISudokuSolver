@@ -1,3 +1,4 @@
+import random
 from tkinter import *
 from tkinter import filedialog
 import os
@@ -7,13 +8,11 @@ root = Tk()
 root.geometry("900x900")
 root.title("AI Sudoku Solver")
 
-
 main_frame = Frame(root)
 Label(main_frame, text="Welcome User").grid(
     row=0, column=0, columnspan=5)
 
 cells = {}
-puzzle_data = None
 
 options = [
     "9x9",
@@ -24,6 +23,7 @@ options = [
 ]
 
 clicked = StringVar()
+puzzle_data = None
 
 
 def clear():
@@ -50,17 +50,18 @@ def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
 
     for i in range(0, sub_row_num):
         for j in range(0, sub_col_num):
-            x = j * width/sub_col_num
-            y = i * height/sub_row_num
+            x = j * width / sub_col_num
+            y = i * height / sub_row_num
             canvas.create_rectangle(
-                x, y, x + width/sub_col_num, y + height/sub_row_num, outline='black')
+                x, y, x + width / sub_col_num, y + height / sub_row_num, outline='black')
             if puzzle_data:
-                print(puzzle_data)
-                canvas.create_text(x + width/sub_col_num/2, y + height/sub_row_num/2,
-                                   text=f"{puzzle_data[i+row_num][j+col_num]}", font=(None, f'{width//sub_col_num//2}'), fill="black")
+                canvas.create_text(x + width / sub_col_num / 2, y + height / sub_row_num / 2,
+                                   text=f"{puzzle_data[i + row_num][j + col_num]}",
+                                   font=(None, f'{width // sub_col_num // 2}'), fill="black")
             else:
-                canvas.create_text(x + width/sub_col_num/2, y + height/sub_row_num/2,
-                                   text=f"{int((j+col_num+1))}", font=(None, f'{width//sub_col_num//2}'), fill="red")
+                canvas.create_text(x + width / sub_col_num / 2, y + height / sub_row_num / 2,
+                                   text=f"{int((j + col_num + 1))}",
+                                   font=(None, f'{width // sub_col_num // 2}'), fill="red")
     # end of segment
 
     # for i in range(sub_row_num):
@@ -69,7 +70,7 @@ def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
     #                       bg=bgcolour, justify="center", borderwidth=1, relief="solid")
     #         label.grid(row=i+1, column=j+1,
     #                    sticky="nsew", ipady=2)
-    frame.grid(row=row_num+1, column=col_num+1)
+    frame.grid(row=row_num + 1, column=col_num + 1)
 
 
 def draw_whole_grid(row, col, sub_row_num, sub_col_num):
@@ -86,12 +87,16 @@ def draw_whole_grid(row, col, sub_row_num, sub_col_num):
 def submit():
     match clicked.get():
         case "9x9":
+            generate_board(9)
             draw_whole_grid(9, 9, 3, 3)
         case "12x12":
+            generate_board(12)
             draw_whole_grid(12, 12, 3, 4)
         case "16x16":
+            generate_board(16)
             draw_whole_grid(16, 16, 4, 4)
         case "25x25":
+            generate_board(25)
             draw_whole_grid(25, 25, 5, 5)
         case "100x100":
             draw_whole_grid(100, 100, 10, 10)
@@ -100,7 +105,7 @@ def submit():
                 math.sqrt(size_data)), int(math.sqrt(size_data)))
 
 
-def browseFiles():
+def browse_files():
     label_file_explorer = Label(main_frame,
                                 text="File Explorer using Tkinter",
                                 width=100, height=4,
@@ -125,10 +130,26 @@ def browseFiles():
         print(e)
 
 
+def generate_board(size):
+    board = [[0 for _ in range(size)] for _ in range(size)]
+    board_tiles = size * size
+    required_tiles = board_tiles * 0.25
+    tiles_placed = 0
+    while tiles_placed < required_tiles:
+        row = random.randint(0, size - 1)
+        col = random.randint(0, size - 1)
+        if board[row][col] == 0:
+            board[row][col] = random.randint(1, size)
+            tiles_placed += 1
+    global puzzle_data
+    puzzle_data = board
+
+
 def convert_from_dot_to_number(data):
     row_len = int(math.sqrt(len(data)))
-    input_array = [[int(data[(i+1)*(j+1)-1]) if data[(i+1)*(j+1)-1]
-                    != "." else 0 for i in range(row_len)] for j in range(row_len)]
+    input_array = [[int(data[(i * 9 + j)]) if data[(i * 9 + j)]
+                                              != "." else 0 for j in range(row_len)] for i in
+                   range(row_len)]
     return input_array, row_len
 
 
@@ -149,7 +170,7 @@ def parse_input_file(data):
 
 def drop_down_menu():
     btn_input_file = Button(main_frame, text="Choose File",
-                            command=browseFiles, width=15)
+                            command=browse_files, width=15)
     btn_input_file.pack()
     clicked.set("Select Options")
     drop = OptionMenu(main_frame, clicked, *options)
