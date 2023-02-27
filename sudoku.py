@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import filedialog
+import math
 
 root = Tk()
 root.geometry("1200x1200")
@@ -21,7 +22,6 @@ options = [
 ]
 
 clicked = StringVar()
-
 
 def clear():
     for widgets in main_frame.winfo_children():
@@ -73,6 +73,7 @@ def draw_whole_grid(row, col, sub_row_num, sub_col_num):
 
 
 def submit():
+    print(clicked.get())
     match clicked.get():
         case "9x9":
             draw_whole_grid(9, 9, 3, 3)
@@ -84,6 +85,9 @@ def submit():
             draw_whole_grid(25, 25, 5, 5)
         case "100x100":
             draw_whole_grid(100, 100, 10, 10)
+        case "Select Options":
+            print("IN HERE")
+            print(puzzle_input_data)
 
 
 def browseFiles():
@@ -100,6 +104,29 @@ def browseFiles():
 
     # Change label contents
     label_file_explorer.configure(text="File Opened: " + filename)
+    with open(filename, "r") as f:
+        file_data = f.read().strip()
+        parse_input_file(file_data)
+
+
+def convert_from_dot_to_number(data):
+    row_len = int(math.sqrt(len(data)))
+    input_array = [[int(data[(i+1)*(j+1)-1]) if data[(i+1)*(j+1)-1] != "." else 0 for i in range(row_len)] for j in range(row_len)]
+    return input_array, row_len
+
+
+def parse_input_file(data):
+    if "." in data:
+        data, puzzle_size = convert_from_dot_to_number(data)
+    else:
+        data = data.split('\n')
+        puzzle_size = len(data)
+        input_array = [[0 for i in range(puzzle_size)] for j in range(puzzle_size)]
+        for row_num, row in enumerate(data):
+            for col_num, number in enumerate(row):
+                input_array[row_num][col_num] = int(number)
+        data = input_array
+    print(data)
 
 
 def drop_down_menu():
