@@ -51,16 +51,18 @@ def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
 
     for i in range(0, sub_row_num):
         for j in range(0, sub_col_num):
-            x = j * width / sub_col_num
-            y = i * height / sub_row_num
+            sqrW = width / sub_col_num
+            sqrH = height / sub_row_num
+            x = j * sqrW
+            y = i * sqrH
             canvas.create_rectangle(
-                x, y, x + width / sub_col_num, y + height / sub_row_num, outline='black')
+                x, y, x + sqrW, y + sqrH, outline='black')
             if puzzle_data:
-                canvas.create_text(x + width / sub_col_num / 2, y + height / sub_row_num / 2,
+                canvas.create_text(x + sqrW / 2, y + sqrH / 2,
                                    text=f"{puzzle_data[i + row_num][j + col_num]}",
                                    font=(None, f'{width // sub_col_num // 2}'), fill="black")
             else:
-                canvas.create_text(x + width / sub_col_num / 2, y + height / sub_row_num / 2,
+                canvas.create_text(x + sqrW / 2, y + sqrH / 2,
                                    text=f"{int((j + col_num + 1))}",
                                    font=(None, f'{width // sub_col_num // 2}'), fill="red")
     # end of segment
