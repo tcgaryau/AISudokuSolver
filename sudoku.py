@@ -100,6 +100,7 @@ def submit():
             generate_board(25)
             draw_whole_grid(25, 25, 5, 5)
         case "100x100":
+            generate_board(100)
             draw_whole_grid(100, 100, 10, 10)
         case "Select Options":
             draw_whole_grid(size_data, size_data, int(
@@ -140,11 +141,27 @@ def generate_board(size):
     board_tiles = size * size
     required_tiles = board_tiles * 0.25
     tiles_placed = 0
+    subgrid_size = int(math.sqrt(size))
+    row_set = [set() for _ in range(size)]
+    col_set = [set() for _ in range(size)]
+    sub_grid_set = [set() for _ in range(size)]
     while tiles_placed < required_tiles:
         row = random.randint(0, size - 1)
         col = random.randint(0, size - 1)
-        if board[row][col] == 0:
-            board[row][col] = random.randint(1, size)
+        value_to_insert = random.randint(1, size)
+
+        can_put_in_row = value_to_insert not in row_set[row]
+        can_put_in_col = value_to_insert not in col_set[col]
+        can_put_in_subgrid = value_to_insert not in \
+                             sub_grid_set[(row // subgrid_size) * subgrid_size +
+                                          (col // math.ceil(math.sqrt(size)))]
+        if board[row][col] == 0 and can_put_in_row and can_put_in_col and can_put_in_subgrid:
+            board[row][col] = value_to_insert
+            row_set[row].add(value_to_insert)
+            col_set[col].add(value_to_insert)
+            sub_grid_set[
+                (row // subgrid_size) * subgrid_size + (col // math.ceil(math.sqrt(size)))].add(
+                value_to_insert)
             tiles_placed += 1
     global puzzle_data
     puzzle_data = board
