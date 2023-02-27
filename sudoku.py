@@ -12,6 +12,7 @@ Label(main_frame, text="Welcome User").grid(
     row=0, column=0, columnspan=5)
 
 cells = {}
+puzzle_data = None
 
 options = [
     "9x9",
@@ -49,7 +50,11 @@ def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
             x = i * width/sub_row_num
             y = j * height/sub_col_num
             canvas.create_rectangle(x, y, x + width/sub_row_num, y + height/sub_col_num, outline='black')
-            canvas.create_text(x + width/sub_row_num/2, y + height/sub_col_num/2, text=f"{int(col_num+y+1)}", font=(None, f'{width//sub_row_num//2}'))
+            if puzzle_data:
+                print(puzzle_data)
+                canvas.create_text(x + width/sub_row_num/2, y + height/sub_col_num/2, text=f"{puzzle_data[i][j]}", font=(None, f'{width//sub_row_num//2}'), fill="black")
+            else:
+                canvas.create_text(x + width/sub_row_num/2, y + height/sub_col_num/2, text=f"{int(i*j)}", font=(None, f'{width//sub_row_num//2}'), fill="red")
     # end of segment
 
     # for i in range(sub_row_num):
@@ -73,7 +78,6 @@ def draw_whole_grid(row, col, sub_row_num, sub_col_num):
 
 
 def submit():
-    print(clicked.get())
     match clicked.get():
         case "9x9":
             draw_whole_grid(9, 9, 3, 3)
@@ -86,8 +90,8 @@ def submit():
         case "100x100":
             draw_whole_grid(100, 100, 10, 10)
         case "Select Options":
-            print("IN HERE")
-            print(puzzle_input_data)
+            draw_whole_grid(size_data, size_data, int(math.sqrt(size_data)), int(math.sqrt(size_data)))
+
 
 
 def browseFiles():
@@ -98,7 +102,7 @@ def browseFiles():
     filename = filedialog.askopenfilename(initialdir="/",
                                           title="Select a File",
                                           filetypes=(("Text files",
-                                                      "*.txt*"),
+                                                      "*.txt"),
                                                      ("all files",
                                                       "*.*")))
 
@@ -106,7 +110,8 @@ def browseFiles():
     label_file_explorer.configure(text="File Opened: " + filename)
     with open(filename, "r") as f:
         file_data = f.read().strip()
-        parse_input_file(file_data)
+        global puzzle_data, size_data
+        puzzle_data, size_data = parse_input_file(file_data)
 
 
 def convert_from_dot_to_number(data):
@@ -121,12 +126,12 @@ def parse_input_file(data):
     else:
         data = data.split('\n')
         puzzle_size = len(data)
-        input_array = [[0 for i in range(puzzle_size)] for j in range(puzzle_size)]
+        input_array = [[0 for _ in range(puzzle_size)] for _ in range(puzzle_size)]
         for row_num, row in enumerate(data):
             for col_num, number in enumerate(row):
                 input_array[row_num][col_num] = int(number)
         data = input_array
-    print(data)
+    return data, puzzle_size
 
 
 def drop_down_menu():
