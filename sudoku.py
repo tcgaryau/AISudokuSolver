@@ -3,7 +3,7 @@ from tkinter import *
 
 root = Tk()
 root.title("AI Sudoku Solver")
-
+root.geometry("900x900")
 
 main_frame = Frame(root)
 Label(main_frame, text="Welcome User").grid(
@@ -40,15 +40,18 @@ def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
     # segment: use a canvas inside subframe
     width = 80
     height = 80
-    canvas = Canvas(frame, height=height, width=width, bg=bgcolour, bd=0, highlightthickness=0)
+    canvas = Canvas(frame, height=height, width=width,
+                    bg=bgcolour, bd=0, highlightthickness=0)
     canvas.pack(fill=BOTH, expand=False)
 
     for i in range(0, sub_row_num):
         for j in range(0, sub_col_num):
-            x = i * width/sub_row_num
-            y = j * height/sub_col_num
-            canvas.create_rectangle(x, y, x + width/sub_row_num, y + height/sub_col_num, outline='black')
-            canvas.create_text(x + width/sub_row_num/2, y + height/sub_col_num/2, text=f"{int(col_num+y+1)}", font=(None, f'{width//sub_row_num//2}'))
+            x = j * width/sub_col_num
+            y = i * height/sub_row_num
+            canvas.create_rectangle(
+                x, y, x + width/sub_col_num, y + height/sub_row_num, outline='black')
+            canvas.create_text(x + width/sub_col_num/2, y + height/sub_row_num/2,
+                               text=f"{int(col_num+j+1)}", font=(None, f'{width//sub_col_num//2}'))
     # end of segment
 
     # for i in range(sub_row_num):
