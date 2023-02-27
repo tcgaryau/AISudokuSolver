@@ -24,6 +24,7 @@ options = [
 
 clicked = StringVar()
 puzzle_data = None
+size_data = 0
 
 
 def clear():
@@ -102,7 +103,7 @@ def submit():
             draw_whole_grid(100, 100, 10, 10)
         case "Select Options":
             draw_whole_grid(size_data, size_data, int(
-                math.sqrt(size_data)), int(math.sqrt(size_data)))
+                math.sqrt(size_data)), math.ceil(math.sqrt(size_data)))
 
 
 def browse_files():
@@ -120,14 +121,18 @@ def browse_files():
 
     # Change label contents
     label_file_explorer.configure(text="File Opened: " + filename)
-    try:
-        with open(filename, "r") as f:
-            file_data = f.read().strip()
-            global puzzle_data, size_data
-            puzzle_data, size_data = parse_input_file(file_data)
-    except Exception as e:
-        label_file_explorer.destroy()
-        print(e)
+    # try:
+    #     with open(filename, "r") as f:
+    #         file_data = f.read().strip()
+    #         global puzzle_data, size_data
+    #         puzzle_data, size_data = parse_input_file(file_data)
+    # except Exception as e:
+    #     label_file_explorer.destroy()
+    #     print(e)
+    with open(filename, "r") as f:
+        file_data = f.read().strip()
+        global puzzle_data, size_data
+        puzzle_data, size_data = parse_input_file(file_data)
 
 
 def generate_board(size):
@@ -159,6 +164,7 @@ def parse_input_file(data):
     else:
         data = data.split('\n')
         puzzle_size = len(data)
+        print(puzzle_size)
         input_array = [[0 for _ in range(puzzle_size)]
                        for _ in range(puzzle_size)]
         for row_num, row in enumerate(data):
