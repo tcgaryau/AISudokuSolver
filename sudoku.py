@@ -5,10 +5,12 @@ import os
 import math
 
 root = Tk()
-root.geometry("900x900")
+# root.geometry("900x900")
+root.attributes('-fullscreen', True)
 root.title("AI Sudoku Solver")
 
 main_frame = Frame(root)
+main_height = root.winfo_screenheight() - 100
 Label(main_frame, text="Welcome User").grid(
     row=0, column=0, columnspan=5)
 
@@ -39,12 +41,14 @@ def change_colour(colour):
     return "#D0ffff"
 
 
-def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
-    frame = Frame(main_frame)
+def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour, parent_frame):
+    frame = Frame(parent_frame)
 
     # segment: use a canvas inside subframe
-    width = 80
-    height = 80
+    # each square is at least of dimension 20
+    sqr_w = max(main_height // sub_col_num / sub_row_num, 20)
+    width = int(sqr_w * sub_col_num)
+    height = int(sqr_w * sub_row_num)
     canvas = Canvas(frame, height=height, width=width,
                     bg=bgcolour, bd=0, highlightthickness=0)
     canvas.pack(fill=BOTH, expand=False)
@@ -79,9 +83,23 @@ def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour):
 def draw_whole_grid(row, col, sub_row_num, sub_col_num):
     clear()
     colour = "#D0ffff"
+
+    # add scroll bars to main frame when it shows a grid
+    canvas = Canvas(main_frame, height=main_height, width=main_height)
+    scrollbar_h = Scrollbar(main_frame, orient=HORIZONTAL, command=canvas.xview)
+    scrollbar_v = Scrollbar(main_frame, orient=VERTICAL, command=canvas.yview)
+    scrollbar_h.pack(side=BOTTOM, fill=X)
+    canvas.pack(side=LEFT, fill=BOTH, expand=True)
+    scrollbar_v.pack(side=RIGHT, fill=Y)
+    canvas.configure(xscrollcommand=scrollbar_h.set)
+    canvas.configure(yscrollcommand=scrollbar_v.set)
+    canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox('all')))
+    inner_frame = Frame(canvas)
+    canvas.create_window((0, 0), window=inner_frame, anchor='nw')
+
     for row_num in range(0, row, sub_row_num):
         for col_num in range(0, col, sub_col_num):
-            draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, colour)
+            draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, colour, inner_frame)
             colour = change_colour(colour)
         if sub_row_num % 2 == 0:
             colour = change_colour(colour)
