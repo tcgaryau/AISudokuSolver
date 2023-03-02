@@ -62,8 +62,9 @@ def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour, parent_f
             canvas.create_rectangle(
                 x, y, x + sqrW, y + sqrH, outline='black')
             if puzzle_data:
+                entry = puzzle_data[i + row_num][j + col_num] if puzzle_data[i + row_num][j + col_num] != 0 else ""
                 canvas.create_text(x + sqrW / 2, y + sqrH / 2,
-                                   text=f"{puzzle_data[i + row_num][j + col_num]}",
+                                   text=f"{entry}",
                                    font=(None, f'{width // sub_col_num // 2}'), fill="black")
             else:
                 canvas.create_text(x + sqrW / 2, y + sqrH / 2,
