@@ -206,9 +206,6 @@ def solve_brute_force() -> bool:
     global puzzle_data, row_set, col_set, sg_row_total, sg_col_total, sub_grid_set
     sg_row_total = int(math.sqrt(size_data))
     sg_col_total = int(math.ceil(math.sqrt(size_data)))
-    row_set = [set() for _ in range(size_data)]
-    col_set = [set() for _ in range(size_data)]
-    sub_grid_set = [set() for _ in range(size_data)]
     empty = find_next_empty()
     if not empty:
         return True
@@ -221,6 +218,8 @@ def solve_brute_force() -> bool:
             puzzle_data[row][col] = num
             row_set[row].add(num)
             col_set[col].add(num)
+            print("pass", sub_grid_set[((row // sg_row_total) * sg_col_total +
+                         (col // sg_col_total))])
             sub_grid_set[((row // sg_row_total) * sg_col_total +
                          (col // sg_col_total))].add(num)
 
@@ -229,6 +228,8 @@ def solve_brute_force() -> bool:
             else:
                 row_set[row].remove(num)
                 col_set[col].remove(num)
+                print("fail", sub_grid_set[((row // sg_row_total) * sg_col_total +
+                              (col // sg_col_total))])
                 sub_grid_set[((row // sg_row_total) * sg_col_total +
                               (col // sg_col_total))].remove(num)
 
@@ -269,16 +270,16 @@ def check_valid(num, row, col, row_total, col_total) -> bool:
     if num in row_set[row] or num in col_set[col]:
         return False
 
-    sg_row_total = int(math.sqrt(size_data))
-    sg_col_total = int(math.ceil(math.sqrt(size_data)))
-    shift_row = row // sg_row_total * sg_row_total
-    shift_col = col // sg_col_total * sg_col_total
-    for i in range(sg_row_total):
-        for j in range(sg_col_total):
-            if num == puzzle_data[i + shift_row][j + shift_col]:
-                return False
-    # if num in sub_grid_set[((row // row_total) * row_total + (col // col_total))]:
-    #     return False
+    # sg_row_total = int(math.sqrt(size_data))
+    # sg_col_total = int(math.ceil(math.sqrt(size_data)))
+    # shift_row = row // sg_row_total * sg_row_total
+    # shift_col = col // sg_col_total * sg_col_total
+    # for i in range(sg_row_total):
+    #     for j in range(sg_col_total):
+    #         if num == puzzle_data[i + shift_row][j + shift_col]:
+    #             return False
+    if num in sub_grid_set[((row // row_total) * row_total + (col // col_total))]:
+        return False
 
     return True
 
@@ -298,20 +299,20 @@ def parse_input_file(data):
         data, puzzle_size = convert_from_dot_to_number(data)
     else:
         data = data.split('\n')
-        puzzle_size = len(data)
-        input_array = [[0 for _ in range(puzzle_size)]
-                       for _ in range(puzzle_size)]
-        row_set = [set() for _ in range(puzzle_size)]
-        col_set = [set() for _ in range(puzzle_size)]
-        sub_grid_set = [set() for _ in range(puzzle_size)]
-        for row_num, row in enumerate(data):
-            for col_num, number in enumerate(row):
-                input_array[row_num][col_num] = int(number)
-                row_set[row_num].add(int(number))
-                col_set[col_num].add(int(number))
-                sub_grid_set[(row_num // int(math.sqrt(puzzle_size)))
-                             * int(math.sqrt(len(data)))
-                             + (col_num // int(math.ceil(math.sqrt(puzzle_size))))].add(int(number))
+    puzzle_size = len(data)
+    input_array = [[0 for _ in range(puzzle_size)]
+                   for _ in range(puzzle_size)]
+    row_set = [set() for _ in range(puzzle_size)]
+    col_set = [set() for _ in range(puzzle_size)]
+    sub_grid_set = [set() for _ in range(puzzle_size)]
+    for row_num, row in enumerate(data):
+        for col_num, number in enumerate(row):
+            input_array[row_num][col_num] = int(number)
+            row_set[row_num].add(int(number))
+            col_set[col_num].add(int(number))
+            sub_grid_set[(row_num // int(math.sqrt(puzzle_size)))
+                         * int(math.sqrt(len(data)))
+                         + (col_num // int(math.ceil(math.sqrt(puzzle_size))))].add(int(number))
 
         data = input_array
     return data, puzzle_size
