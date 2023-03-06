@@ -1,4 +1,5 @@
 import random
+import time
 from tkinter import *
 from tkinter import filedialog
 import os
@@ -187,6 +188,64 @@ def generate_board(size):
     global puzzle_data
     puzzle_data = board
 
+def solve_brute_force() -> bool:
+    """
+    Recursive solving with brute force algorithm.
+    :return: if a solution is found
+    """
+    global puzzle_data
+    empty = find_next_empty()
+    if not empty:
+        return True
+    else:
+        row, col = empty
+
+    for i in range(size_data):
+        num = i + 1
+        if check_valid(num, row, col):
+            puzzle_data[row][col] = num
+            if solve_brute_force():
+                return True
+
+    puzzle_data[row][col] = 0
+    return False
+
+def find_next_empty():
+    """
+    Get the row and col number of the next empty square on the board.
+    :return: a tuple
+    """
+    global size_data, puzzle_data
+    for row in range(size_data):
+        for col in range(size_data):
+            if puzzle_data[row][col] == 0:
+                return row, col
+    return None
+
+def check_valid(num, row, col) -> bool:
+    """
+    Check if num can be assigned at (row, col) on the board.
+    :return: if the assignment is valid
+    """
+    for i in range(size_data):
+        if puzzle_data[row][i] == num:
+            return False
+
+    for i in range(size_data):
+        if puzzle_data[i][col] == num:
+            return False
+
+    sg_row_total = int(math.sqrt(size_data))
+    sg_col_total = int(math.ceil(math.sqrt(size_data)))
+    shift_row = row // sg_row_total * sg_row_total
+    shift_col = col // sg_col_total * sg_col_total
+    for i in range(sg_row_total):
+        for j in range(sg_col_total):
+            if num == puzzle_data[i + shift_row][j + shift_col]:
+                return False
+
+    return True
+
 
 def convert_from_dot_to_number(data):
     row_len = int(math.sqrt(len(data)))
@@ -202,7 +261,6 @@ def parse_input_file(data):
     else:
         data = data.split('\n')
         puzzle_size = len(data)
-        print(puzzle_size)
         input_array = [[0 for _ in range(puzzle_size)]
                        for _ in range(puzzle_size)]
         for row_num, row in enumerate(data):
@@ -222,10 +280,25 @@ def drop_down_menu():
     button = Button(main_frame, text="Submit", command=submit, width=15)
     button.pack()
 
+def display_message(msg):
+    Label(main_frame, text=msg).grid(
+        row=0, column=0, columnspan=5)
 
 def create_sudoku():
     clear()
     drop_down_menu()
+
+def on_click_solve_brute_force():
+    clear()
+    global size_data, puzzle_data
+    size_data = len(puzzle_data)
+    start = time.time()
+    if solve_brute_force():
+        print(f"Brute Force took {time.time() - start} s")
+        draw_whole_grid(size_data, size_data, int(
+            math.sqrt(size_data)), math.ceil(math.sqrt(size_data)))
+    else:
+        display_message("No solution found.")
 
 
 def solve_heruistic():
@@ -251,7 +324,7 @@ def main():
     btn_create.grid(row=0, column=0)
 
     btn_solve_heuristic = Button(
-        bottomFrame, text="Solve (heuristic)", command=solve_heruistic, width=15)
+        bottomFrame, text="Solve (heuristic)", command=on_click_solve_brute_force, width=15)
     btn_solve_heuristic.grid(row=0, column=4)
 
     btn_solve_csp = Button(bottomFrame, text="Solve (CSP)",
