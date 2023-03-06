@@ -190,7 +190,9 @@ def generate_board(size):
 
 def solve_brute_force() -> bool:
     """
-    Recursive solving with brute force algorithm.
+    Brute force depth-first searching algorithm.
+    In each node, find a valid number to fill the most top-left empty square.
+    A solution is found if every square on the board is filled.
     :return: if a solution is found
     """
     global puzzle_data
