@@ -28,8 +28,8 @@ options = [
 clicked = StringVar()
 puzzle_data = None
 size_data = 0
-row_set = set()
-col_set = set()
+row_set = None
+col_set = None
 sub_grid_set = None
 sg_row_total = 0
 sg_col_total = 0
@@ -206,6 +206,9 @@ def solve_brute_force() -> bool:
     global puzzle_data, row_set, col_set, sg_row_total, sg_col_total, sub_grid_set
     sg_row_total = int(math.sqrt(size_data))
     sg_col_total = int(math.ceil(math.sqrt(size_data)))
+    row_set = [set() for _ in range(size_data)]
+    col_set = [set() for _ in range(size_data)]
+    sub_grid_set = [set() for _ in range(size_data)]
     empty = find_next_empty()
     if not empty:
         return True
