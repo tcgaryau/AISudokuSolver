@@ -6,12 +6,12 @@ import os
 import math
 
 root = Tk()
-# root.geometry("900x900")
-root.attributes('-fullscreen', True)
+root.geometry("900x900")
+# root.attributes('-fullscreen', True)
 root.title("AI Sudoku Solver")
 
 main_frame = Frame(root)
-main_height = root.winfo_screenheight() - 100
+main_height = root.winfo_screenheight() - root.winfo_screenheight() * 0.25
 Label(main_frame, text="Welcome User").grid(
     row=0, column=0, columnspan=5)
 
@@ -28,6 +28,11 @@ options = [
 clicked = StringVar()
 puzzle_data = None
 size_data = 0
+row_set = set()
+col_set = set()
+sub_grid_set = None
+sg_row_total = 0
+sg_col_total = 0
 
 
 def clear():
@@ -63,7 +68,8 @@ def draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, bgcolour, parent_f
             canvas.create_rectangle(
                 x, y, x + sqrW, y + sqrH, outline='black')
             if puzzle_data:
-                entry = puzzle_data[i + row_num][j + col_num] if puzzle_data[i + row_num][j + col_num] != 0 else ""
+                entry = puzzle_data[i + row_num][j + col_num] if puzzle_data[i + row_num][
+                                                                     j + col_num] != 0 else ""
                 canvas.create_text(x + sqrW / 2, y + sqrH / 2,
                                    text=f"{entry}",
                                    font=(None, f'{width // sub_col_num // 2}'), fill="black")
@@ -159,6 +165,7 @@ def browse_files():
 
 
 def generate_board(size):
+    global row_set, col_set, sub_grid_set
     board = [[0 for _ in range(size)] for _ in range(size)]
     board_tiles = size * size
     required_tiles = board_tiles * 0.25
@@ -188,6 +195,7 @@ def generate_board(size):
     global puzzle_data
     puzzle_data = board
 
+
 def solve_brute_force() -> bool:
     """
     Brute force depth-first searching algorithm.
@@ -195,7 +203,9 @@ def solve_brute_force() -> bool:
     A solution is found if every square on the board is filled.
     :return: if a solution is found
     """
-    global puzzle_data
+    global puzzle_data, row_set, col_set, sg_row_total, sg_col_total, sub_grid_set
+    sg_row_total = int(math.sqrt(size_data))
+    sg_col_total = int(math.ceil(math.sqrt(size_data)))
     empty = find_next_empty()
     if not empty:
         return True
@@ -204,13 +214,24 @@ def solve_brute_force() -> bool:
 
     for i in range(size_data):
         num = i + 1
-        if check_valid(num, row, col):
+        if check_valid(num, row, col, sg_row_total, sg_col_total):
             puzzle_data[row][col] = num
+            row_set[row].add(num)
+            col_set[col].add(num)
+            sub_grid_set[((row // sg_row_total) * sg_col_total +
+                         (col // sg_col_total))].add(num)
+
             if solve_brute_force():
                 return True
+            else:
+                row_set[row].remove(num)
+                col_set[col].remove(num)
+                sub_grid_set[((row // sg_row_total) * sg_col_total +
+                              (col // sg_col_total))].remove(num)
 
     puzzle_data[row][col] = 0
     return False
+
 
 def find_next_empty():
     """
@@ -224,18 +245,26 @@ def find_next_empty():
                 return row, col
     return None
 
-def check_valid(num, row, col) -> bool:
+
+def check_valid(num, row, col, row_total, col_total) -> bool:
     """
     Check if num can be assigned at (row, col) on the board.
     :return: if the assignment is valid
     """
-    for i in range(size_data):
-        if puzzle_data[row][i] == num:
-            return False
+    # for i in range(size_data):
+    #     if puzzle_data[row][i] == num:
+    #         return False
+    #
+    # for i in range(size_data):
+    #     if puzzle_data[i][col] == num:
+    #         return False
+    # print("row set", row, row_set[row])
+    # print("col set", col, col_set[col])
+    # print("sub grid set", (row // row_total) * row_total + (col // col_total),
+    #       sub_grid_set[(row // row_total) * row_total + (col // col_total)])
 
-    for i in range(size_data):
-        if puzzle_data[i][col] == num:
-            return False
+    if num in row_set[row] or num in col_set[col]:
+        return False
 
     sg_row_total = int(math.sqrt(size_data))
     sg_col_total = int(math.ceil(math.sqrt(size_data)))
@@ -245,6 +274,8 @@ def check_valid(num, row, col) -> bool:
         for j in range(sg_col_total):
             if num == puzzle_data[i + shift_row][j + shift_col]:
                 return False
+    # if num in sub_grid_set[((row // row_total) * row_total + (col // col_total))]:
+    #     return False
 
     return True
 
@@ -258,6 +289,8 @@ def convert_from_dot_to_number(data):
 
 
 def parse_input_file(data):
+    global row_set, col_set, sub_grid_set
+
     if "." in data:
         data, puzzle_size = convert_from_dot_to_number(data)
     else:
@@ -265,9 +298,18 @@ def parse_input_file(data):
         puzzle_size = len(data)
         input_array = [[0 for _ in range(puzzle_size)]
                        for _ in range(puzzle_size)]
+        row_set = [set() for _ in range(puzzle_size)]
+        col_set = [set() for _ in range(puzzle_size)]
+        sub_grid_set = [set() for _ in range(puzzle_size)]
         for row_num, row in enumerate(data):
             for col_num, number in enumerate(row):
                 input_array[row_num][col_num] = int(number)
+                row_set[row_num].add(int(number))
+                col_set[col_num].add(int(number))
+                sub_grid_set[(row_num // int(math.sqrt(puzzle_size)))
+                             * int(math.sqrt(len(data)))
+                             + (col_num // int(math.ceil(math.sqrt(puzzle_size))))].add(int(number))
+
         data = input_array
     return data, puzzle_size
 
@@ -282,13 +324,16 @@ def drop_down_menu():
     button = Button(main_frame, text="Submit", command=submit, width=15)
     button.pack()
 
+
 def display_message(msg):
     Label(main_frame, text=msg).grid(
         row=0, column=0, columnspan=5)
 
+
 def create_sudoku():
     clear()
     drop_down_menu()
+
 
 def on_click_solve_brute_force():
     clear()
