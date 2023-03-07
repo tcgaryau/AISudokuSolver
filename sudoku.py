@@ -194,11 +194,7 @@ def generate_board(size):
             tiles_placed += 1
     global puzzle_data
     puzzle_data = board
-    print_puzzle_data(puzzle_data)
-
-
-def print_puzzle_data(data):
-    print(['' if num == 0 else num for row in data for num in row])
+    print(['' if num == 0 else num for row in puzzle_data for num in row])
 
 
 def solve_brute_force() -> bool:
@@ -217,28 +213,38 @@ def solve_brute_force() -> bool:
     else:
         row, col = empty
 
-    for i in range(size_data):
-        num = i + 1
-        if check_valid(num, row, col):
-            puzzle_data[row][col] = num
-            row_set[row].add(num)
-            col_set[col].add(num)
-            set_index = (row // sg_row_total) * sg_col_total + (col // sg_col_total)
-            # print("index", set_index, "adding", num, "to", sub_grid_set[set_index])
-            sub_grid_set[set_index].add(num)
+    set_index = (row // sg_row_total) * sg_col_total + (col // sg_col_total)
+    for num in get_available_numbers(row, col, set_index):
+        # if check_valid(num, row, col):
+        puzzle_data[row][col] = num
+        row_set[row].add(num)
+        col_set[col].add(num)
 
-            if solve_brute_force():
-                return True
-            else:
-                row_set[row].remove(num)
-                col_set[col].remove(num)
-                set_index = ((row // sg_row_total) * sg_col_total + (col // sg_col_total))
-                # print("Backtracking from set #", set_index, ": ", sub_grid_set[set_index])
-                sub_grid_set[set_index].remove(num)
-                # print("result", sub_grid_set[set_index])
+        # print("index", set_index, "adding", num, "to", sub_grid_set[set_index])
+        sub_grid_set[set_index].add(num)
+
+        if solve_brute_force():
+            return True
+        else:
+            row_set[row].remove(num)
+            col_set[col].remove(num)
+            # print("Backtracking from set #", set_index, ": ", sub_grid_set[set_index])
+            sub_grid_set[set_index].remove(num)
+            # print("result", sub_grid_set[set_index])
 
     puzzle_data[row][col] = 0
     return False
+
+
+def get_available_numbers(row, col, set_index):
+    global row_set, col_set, sg_row_total, sg_col_total, sub_grid_set
+    used_nums = set(list(row_set[row]) + list(col_set[col]) + list(sub_grid_set[set_index]))
+    all_possible_options = list(range(1, size_data+1))
+    remaining_options = []
+    for num in all_possible_options:
+        if num not in used_nums:
+            remaining_options.append(num)
+    return remaining_options
 
 
 def find_next_empty():
