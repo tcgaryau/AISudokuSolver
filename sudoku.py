@@ -198,10 +198,7 @@ def generate_board(size):
 
 
 def print_puzzle_data(data):
-    print([None if num == 0 else num for row in data for num in row])
-    # for row in data:
-    #     for num in row:
-    #         print(num, end=",")
+    print(['' if num == 0 else num for row in data for num in row])
 
 
 def solve_brute_force() -> bool:
@@ -236,7 +233,7 @@ def solve_brute_force() -> bool:
                 row_set[row].remove(num)
                 col_set[col].remove(num)
                 set_index = ((row // sg_row_total) * sg_col_total + (col // sg_col_total))
-                # print("removing", num, "from set#", set_index, ": ", sub_grid_set[set_index])
+                # print("Backtracking from set #", set_index, ": ", sub_grid_set[set_index])
                 sub_grid_set[set_index].remove(num)
                 # print("result", sub_grid_set[set_index])
 
@@ -290,13 +287,13 @@ def check_valid(num, row, col) -> bool:
 
     return True
 
-
-def convert_from_dot_to_number(data):
-    row_len = int(math.sqrt(len(data)))
-    input_array = [[int(data[(i * 9 + j)]) if data[(i * 9 + j)]
-                                              != "." else 0 for j in range(row_len)] for i in
-                   range(row_len)]
-    return input_array, row_len
+#
+# def convert_from_dot_to_number(data):
+#     row_len = int(math.sqrt(len(data)))
+#     input_array = [[int(data[(i * 9 + j)]) if data[(i * 9 + j)]
+#                                               != "." else 0 for j in range(row_len)] for i in
+#                    range(row_len)]
+#     return input_array, row_len
 
 #
 # def parse_input_file(data):
@@ -327,15 +324,12 @@ def convert_from_dot_to_number(data):
 def parse_input_file(data):
     global row_set, col_set, sub_grid_set
 
-    # print(data)
     data = data.split(',')
-    # print(data)
     puzzle_size = int(math.sqrt(len(data)))
     data = [0 if num == "" else int(num) for num in data]
     rows_of_input = []
     for row in range(puzzle_size):
         rows_of_input.append(data[row*puzzle_size:row*puzzle_size+puzzle_size])
-    print(rows_of_input)
 
     input_array = [[0 for _ in range(puzzle_size)]
                    for _ in range(puzzle_size)]
