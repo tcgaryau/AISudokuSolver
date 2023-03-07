@@ -218,8 +218,6 @@ def solve_brute_force() -> bool:
             puzzle_data[row][col] = num
             row_set[row].add(num)
             col_set[col].add(num)
-            print("pass", sub_grid_set[((row // sg_row_total) * sg_col_total +
-                         (col // sg_col_total))])
             sub_grid_set[((row // sg_row_total) * sg_col_total +
                          (col // sg_col_total))].add(num)
 
@@ -228,8 +226,6 @@ def solve_brute_force() -> bool:
             else:
                 row_set[row].remove(num)
                 col_set[col].remove(num)
-                print("fail", sub_grid_set[((row // sg_row_total) * sg_col_total +
-                              (col // sg_col_total))])
                 sub_grid_set[((row // sg_row_total) * sg_col_total +
                               (col // sg_col_total))].remove(num)
 
@@ -267,7 +263,9 @@ def check_valid(num, row, col, row_total, col_total) -> bool:
     # print("sub grid set", (row // row_total) * row_total + (col // col_total),
     #       sub_grid_set[(row // row_total) * row_total + (col // col_total)])
 
-    if num in row_set[row] or num in col_set[col]:
+    if num in row_set[row]:
+        return False
+    if num in col_set[col]:
         return False
 
     # sg_row_total = int(math.sqrt(size_data))
