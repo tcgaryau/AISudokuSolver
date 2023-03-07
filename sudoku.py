@@ -194,6 +194,14 @@ def generate_board(size):
             tiles_placed += 1
     global puzzle_data
     puzzle_data = board
+    print_puzzle_data(puzzle_data)
+
+
+def print_puzzle_data(data):
+    print([None if num == 0 else num for row in data for num in row])
+    # for row in data:
+    #     for num in row:
+    #         print(num, end=",")
 
 
 def solve_brute_force() -> bool:
@@ -214,24 +222,23 @@ def solve_brute_force() -> bool:
 
     for i in range(size_data):
         num = i + 1
-        if check_valid(num, row, col, sg_row_total, sg_col_total):
+        if check_valid(num, row, col):
             puzzle_data[row][col] = num
             row_set[row].add(num)
             col_set[col].add(num)
-            print("pass", sub_grid_set[((row // sg_row_total) * sg_col_total +
-                         (col // sg_col_total))])
-            sub_grid_set[((row // sg_row_total) * sg_col_total +
-                         (col // sg_col_total))].add(num)
+            set_index = (row // sg_row_total) * sg_col_total + (col // sg_col_total)
+            # print("index", set_index, "adding", num, "to", sub_grid_set[set_index])
+            sub_grid_set[set_index].add(num)
 
             if solve_brute_force():
                 return True
             else:
                 row_set[row].remove(num)
                 col_set[col].remove(num)
-                print("fail", sub_grid_set[((row // sg_row_total) * sg_col_total +
-                              (col // sg_col_total))])
-                sub_grid_set[((row // sg_row_total) * sg_col_total +
-                              (col // sg_col_total))].remove(num)
+                set_index = ((row // sg_row_total) * sg_col_total + (col // sg_col_total))
+                # print("removing", num, "from set#", set_index, ": ", sub_grid_set[set_index])
+                sub_grid_set[set_index].remove(num)
+                # print("result", sub_grid_set[set_index])
 
     puzzle_data[row][col] = 0
     return False
@@ -250,7 +257,7 @@ def find_next_empty():
     return None
 
 
-def check_valid(num, row, col, row_total, col_total) -> bool:
+def check_valid(num, row, col) -> bool:
     """
     Check if num can be assigned at (row, col) on the board.
     :return: if the assignment is valid
@@ -278,7 +285,7 @@ def check_valid(num, row, col, row_total, col_total) -> bool:
     #     for j in range(sg_col_total):
     #         if num == puzzle_data[i + shift_row][j + shift_col]:
     #             return False
-    if num in sub_grid_set[((row // row_total) * row_total + (col // col_total))]:
+    if num in sub_grid_set[((row // sg_row_total) * sg_row_total + (col // sg_col_total))]:
         return False
 
     return True
@@ -291,21 +298,51 @@ def convert_from_dot_to_number(data):
                    range(row_len)]
     return input_array, row_len
 
+#
+# def parse_input_file(data):
+#     global row_set, col_set, sub_grid_set
+#
+#     if "." in data:
+#         data, puzzle_size = convert_from_dot_to_number(data)
+#     else:
+#         data = data.split('\n')
+#     puzzle_size = len(data)
+#     input_array = [[0 for _ in range(puzzle_size)]
+#                    for _ in range(puzzle_size)]
+#     row_set = [set() for _ in range(puzzle_size)]
+#     col_set = [set() for _ in range(puzzle_size)]
+#     sub_grid_set = [set() for _ in range(puzzle_size)]
+#     for row_num, row in enumerate(data):
+#         for col_num, number in enumerate(row):
+#             input_array[row_num][col_num] = int(number)
+#             row_set[row_num].add(int(number))
+#             col_set[col_num].add(int(number))
+#             sub_grid_set[(row_num // int(math.sqrt(puzzle_size)))
+#                          * int(math.sqrt(len(data)))
+#                          + (col_num // int(math.ceil(math.sqrt(puzzle_size))))].add(int(number))
+#
+#         data = input_array
+#     return data, puzzle_size
 
 def parse_input_file(data):
     global row_set, col_set, sub_grid_set
 
-    if "." in data:
-        data, puzzle_size = convert_from_dot_to_number(data)
-    else:
-        data = data.split('\n')
-    puzzle_size = len(data)
+    # print(data)
+    data = data.split(',')
+    # print(data)
+    puzzle_size = int(math.sqrt(len(data)))
+    data = [0 if num == "" else int(num) for num in data]
+    rows_of_input = []
+    for row in range(puzzle_size):
+        rows_of_input.append(data[row*puzzle_size:row*puzzle_size+puzzle_size])
+    print(rows_of_input)
+
     input_array = [[0 for _ in range(puzzle_size)]
                    for _ in range(puzzle_size)]
     row_set = [set() for _ in range(puzzle_size)]
     col_set = [set() for _ in range(puzzle_size)]
     sub_grid_set = [set() for _ in range(puzzle_size)]
-    for row_num, row in enumerate(data):
+    for row_num, row in enumerate(rows_of_input):
         for col_num, number in enumerate(row):
             input_array[row_num][col_num] = int(number)
             row_set[row_num].add(int(number))
