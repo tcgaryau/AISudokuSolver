@@ -22,7 +22,6 @@ class BruteForce:
         self.sg_row_total = int(math.sqrt(self.size_data))
         self.sg_col_total = int(math.ceil(math.sqrt(self.size_data)))
         if empty_tuple := self.find_next_empty():
-            print("empty_tuple", empty_tuple)
             row, col = empty_tuple
 
         else:
@@ -78,5 +77,5 @@ class BruteForce:
         return True
 
     def return_board(self):
-        print(self.puzzle_data)
+        # print(self.puzzle_data)
         return self.puzzle_data

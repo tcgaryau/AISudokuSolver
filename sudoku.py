@@ -6,27 +6,7 @@ import os
 import math
 from brute_force import BruteForce
 
-root = Tk()
-root.geometry("900x900")
-# root.attributes('-fullscreen', True)
-root.title("AI Sudoku Solver")
-
-main_frame = Frame(root)
-main_height = root.winfo_screenheight() - root.winfo_screenheight() * 0.25
-Label(main_frame, text="Welcome User").grid(
-    row=0, column=0, columnspan=5)
-
 cells = {}
-
-options = [
-    "9x9",
-    "12x12",
-    "16x16",
-    "25x25",
-    "100x100"
-]
-
-clicked = StringVar()
 
 
 class SudokuBoard:
@@ -38,8 +18,13 @@ class SudokuBoard:
         self.col_set = None
         self.sub_grid_set = None
 
+        self.main_frame = None
+        self.main_height = None
+
+        self.clicked = None
+
     def clear(self):
-        for widgets in main_frame.winfo_children():
+        for widgets in self.main_frame.winfo_children():
             widgets.destroy()
         cells.clear()
 
@@ -51,7 +36,7 @@ class SudokuBoard:
 
         # segment: use a canvas inside subframe
         # each square is at least of dimension 20
-        sqr_w = max(main_height // sub_col_num / sub_row_num, 20)
+        sqr_w = max(self.main_height // sub_col_num / sub_row_num, 20)
         width = int(sqr_w * sub_col_num)
         height = int(sqr_w * sub_row_num)
         canvas = Canvas(frame, height=height, width=width,
@@ -92,9 +77,9 @@ class SudokuBoard:
         colour = "#D0ffff"
 
         # add scroll bars to main frame when it shows a grid
-        canvas = Canvas(main_frame, height=main_height, width=main_height)
-        scrollbar_h = Scrollbar(main_frame, orient=HORIZONTAL, command=canvas.xview)
-        scrollbar_v = Scrollbar(main_frame, orient=VERTICAL, command=canvas.yview)
+        canvas = Canvas(self.main_frame, height=self.main_height, width=self.main_height)
+        scrollbar_h = Scrollbar(self.main_frame, orient=HORIZONTAL, command=canvas.xview)
+        scrollbar_v = Scrollbar(self.main_frame, orient=VERTICAL, command=canvas.yview)
         scrollbar_h.pack(side=BOTTOM, fill=X)
         canvas.pack(side=LEFT, fill=BOTH, expand=True)
         scrollbar_v.pack(side=RIGHT, fill=Y)
@@ -112,7 +97,7 @@ class SudokuBoard:
                 colour = self.change_colour(colour)
 
     def submit(self):
-        match clicked.get():
+        match self.clicked.get():
             case "9x9":
                 self.generate_board(9)
                 self.draw_whole_grid(9, 9, 3, 3)
@@ -133,7 +118,7 @@ class SudokuBoard:
                     math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)))
 
     def browse_files(self):
-        label_file_explorer = Label(main_frame,
+        label_file_explorer = Label(self.main_frame,
                                     text="File Explorer using Tkinter",
                                     width=100, height=4,
                                     fg="blue")
@@ -209,24 +194,32 @@ class SudokuBoard:
                 self.row_set[row_num].add(int(number))
                 self.col_set[col_num].add(int(number))
                 self.sub_grid_set[(row_num // int(math.sqrt(puzzle_size)))
-                             * int(math.sqrt(len(data)))
-                             + (col_num // int(math.ceil(math.sqrt(puzzle_size))))].add(int(number))
+                                  * int(math.sqrt(len(data)))
+                                  + (col_num // int(math.ceil(math.sqrt(puzzle_size))))].add(
+                    int(number))
 
             data = input_array
         return data, puzzle_size
 
     def drop_down_menu(self):
-        btn_input_file = Button(main_frame, text="Choose File",
+        options = [
+            "9x9",
+            "12x12",
+            "16x16",
+            "25x25",
+            "100x100"
+        ]
+        btn_input_file = Button(self.main_frame, text="Choose File",
                                 command=self.browse_files, width=15)
         btn_input_file.pack()
-        clicked.set("Select Options")
-        drop = OptionMenu(main_frame, clicked, *options)
+        self.clicked.set("Select Options")
+        drop = OptionMenu(self.main_frame, self.clicked, *options)
         drop.pack()
-        button = Button(main_frame, text="Submit", command=self.submit, width=15)
+        button = Button(self.main_frame, text="Submit", command=self.submit, width=15)
         button.pack()
 
     def display_message(self, msg):
-        Label(main_frame, text=msg).grid(
+        Label(self.main_frame, text=msg).grid(
             row=0, column=0, columnspan=5)
 
     def create_sudoku(self):
@@ -235,7 +228,8 @@ class SudokuBoard:
 
     def on_click_solve_brute_force(self):
         self.clear()
-        brute_force = BruteForce(self.puzzle_data, self.size_data, self.row_set, self.col_set, self.sub_grid_set)
+        brute_force = BruteForce(self.puzzle_data, self.size_data, self.row_set, self.col_set,
+                                 self.sub_grid_set)
         start = time.time()
         if brute_force.solve_brute_force():
             self.puzzle_data = brute_force.return_board()
@@ -245,16 +239,24 @@ class SudokuBoard:
         else:
             self.display_message("No solution found.")
 
-    def solve_heruistic(self):
-        if len(cells) == 0:
-            return
-
     def solve_csp(self):
         if len(cells) == 0:
             return
 
     def main(self):
-        main_frame.pack(side=TOP)
+        root = Tk()
+        root.geometry("900x900")
+        # root.attributes('-fullscreen', True)
+        root.title("AI Sudoku Solver")
+
+        self.clicked = StringVar()
+
+        self.main_frame = Frame(root)
+        self.main_height = root.winfo_screenheight() - root.winfo_screenheight() * 0.25
+        Label(self.main_frame, text="Welcome User").grid(
+            row=0, column=0, columnspan=5)
+
+        self.main_frame.pack(side=TOP)
 
         bottomFrame = Frame(root)
 
