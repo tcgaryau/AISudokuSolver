@@ -12,36 +12,50 @@ class BruteForce:
         self.sg_col_total = 0
         self.size_data = size_data
 
-    def solve_brute_force(self) -> bool:
+        self.num_branch_fail = 0
+        self.max_fail = size_data * size_data * 1000
+
+    def solve_brute_force(self, is_first=True) -> bool:
         """
         Brute force depth-first searching algorithm.
         In each node, find a valid number to fill the most top-left empty square.
         A solution is found if every square on the board is filled.
         :return: if a solution is found
         """
+        print(self.num_branch_fail)
+
         self.sg_row_total = int(math.sqrt(self.size_data))
         self.sg_col_total = int(math.ceil(math.sqrt(self.size_data)))
         if empty_tuple := self.find_next_empty():
+            print("empty_tuple", empty_tuple)
             row, col = empty_tuple
-
         else:
             return True
+
+        if self.num_branch_fail >= self.max_fail:
+            return False
         set_index = (row // self.sg_row_total) * self.sg_col_total + (col // self.sg_col_total)
         for num in self.get_available_numbers(row, col, set_index):
-            # if check_valid(num, row, col):
+
+            # if we've reached the max_depth, reset the counter and continue
+            if is_first and self.num_branch_fail >= self.max_fail:
+                self.num_branch_fail = 0
+                continue
+
             self.puzzle_data[row][col] = num
             self.row_set[row].add(num)
             self.col_set[col].add(num)
-
-            # print("index", set_index, "adding", num, "to", sub_grid_set[set_index])
             self.sub_grid_set[set_index].add(num)
 
-            if self.solve_brute_force():
+            if self.solve_brute_force(False):
                 return True
+
             self.row_set[row].remove(num)
             self.col_set[col].remove(num)
-            # print("Backtracking from set #", set_index, ": ", sub_grid_set[set_index])
             self.sub_grid_set[set_index].remove(num)
+
+            self.num_branch_fail += 1
+
         self.puzzle_data[row][col] = 0
         return False
 
@@ -62,20 +76,12 @@ class BruteForce:
         all_possible_options = list(range(1, self.size_data + 1))
         return [num for num in all_possible_options if num not in used_nums]
 
-    def check_valid(self, num, row, col) -> bool:
-        """
-        Check if num can be assigned at (row, col) on the board.
-        :return: if the assignment is valid
-        """
-
-        if num in self.row_set[row] or num in self.col_set[col]:
-            return False
-        if num in self.sub_grid_set[
-            ((row // self.sg_row_total) * self.sg_row_total + (col // self.sg_col_total))]:
-            return False
-
-        return True
 
     def return_board(self):
         # print(self.puzzle_data)
         return self.puzzle_data
+
+    def increase_max_depth(self):
+        self.max_fail = self.max_fail * 1.05
+
+
