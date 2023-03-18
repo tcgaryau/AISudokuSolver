@@ -26,7 +26,7 @@ class SudokuBoard:
     def clear(self):
         for widgets in self.main_frame.winfo_children():
             widgets.destroy()
-        cells.clear()
+            cells.clear()
 
     def change_colour(self, colour):
         return "#ffffd0" if colour == "#D0ffff" else "#D0ffff"
@@ -34,7 +34,7 @@ class SudokuBoard:
     def draw_sub_grid(self, row_num, col_num, sub_row_num, sub_col_num, bgcolour, parent_frame):
         frame = Frame(parent_frame)
 
-        # segment: use a canvas inside subframe
+        # segment:use a canvas inside subframe
         # each square is at least of dimension 20
         sqr_w = max(self.main_height // sub_col_num / sub_row_num, 20)
         width = int(sqr_w * sub_col_num)
@@ -239,10 +239,12 @@ class SudokuBoard:
                 self.draw_whole_grid(self.size_data, self.size_data, int(
                     math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)))
                 break
-            elif brute_force.num_branch_fail < brute_force.max_fail:
-                self.display_message("Invalid board. No solution found.")
-                break
-            brute_force.increase_max_depth()
+            # elif brute_force.num_branch_fail < brute_force.max_fail:
+            #     self.display_message("Invalid board. No solution found.")
+            #     break
+            if brute_force.max_fail < brute_force.num_branch_fail:
+                brute_force.increase_max_depth()
+            # brute_force.increase_max_depth()
         else:
             self.display_message("Timer ran out. No solution found.")
 

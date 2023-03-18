@@ -1,4 +1,4 @@
-9x9 sample text files:
+9x9sampletextfiles:
 
 003020600
 900305001

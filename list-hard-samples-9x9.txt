@@ -1,8 +1,8 @@
-Note: there are 95 9x9 Sudoku puzzles on this page. You should create your sample text files from the info given. The "." means the square is empty. Each row gives one Sudoku puzzle.
+Note:thereare959x9Sudokupuzzlesonthispage.Youshouldcreateyoursampletextfilesfromtheinfogiven.The"."meansthesquareisempty.EachrowgivesoneSudokupuzzle.
 
-For example:
+Forexample:
 "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......"
-is convereted to a text file as follows:
+isconveretedtoatextfileasfollows:
 
 400000805
 030000000
@@ -15,7 +15,7 @@ is convereted to a text file as follows:
 104000000
 
 
-95 hard 9x9 puzzles:
+95hard9x9puzzles:
 
 
 4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......
