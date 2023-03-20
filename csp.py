@@ -25,9 +25,10 @@ class CSP:
         self.puzzle_data = puzzle_data
         self.size_data = len(puzzle_data)
         self.board = None
+        self.unassigned = set()
 
     def init_board(self):
-        """ Initialize a sudoku board as a 2D array of Squares. """
+        """ Initialize a sudoku board as a 2D array of Squares, and the domain of each square. """
         size = self.size_data
         puzzle = self.puzzle_data
         board = [[None for _ in range(size)] for _ in range(size)]
@@ -35,7 +36,9 @@ class CSP:
             for j in range(size):
                 value = puzzle[i][j]
                 if value == 0:
-                    board[i][j] = Square(i, j, set(range(1, size + 1)))
+                    square = Square(i, j, set(range(1, size + 1)))
+                    board[i][j] = square
+                    self.unassigned.add(square)
                 else:
                     board[i][j] = Square(i, j, {value}, True)
 
@@ -45,37 +48,39 @@ class CSP:
         """ Populate the neighbors field of every square on the current board. """
         board = self.board
         size = self.size_data
-        for i in range(size):
-            for j in range(size):
-                curr_square = board[i][j]
-                if not curr_square.assigned:
-                    neighbors = set()
+        sg_row_total = int(math.sqrt(size))
+        sg_col_total = int(math.ceil(math.sqrt(size)))
 
-                    for n in range(size):
-                        square = board[i][n]
-                        if not square.assigned and n != j:
-                            neighbors.add(square)
+        for curr_square in self.unassigned:
+            row = curr_square.row
+            col = curr_square.col
+            neighbors = set()
 
-                    for m in range(size):
-                        square = board[m][j]
-                        if not square.assigned and m != i:
-                            neighbors.add(square)
+            for n in range(size):
+                square = board[row][n]
+                if not square.assigned and n != col:
+                    neighbors.add(square)
 
-                    sg_row_total = int(math.sqrt(size))
-                    sg_col_total = int(math.ceil(math.sqrt(size)))
-                    shift_row = i // sg_row_total * sg_row_total
-                    shift_col = j // sg_col_total * sg_col_total
-                    for m in range(sg_row_total):
-                        for n in range(sg_col_total):
-                            square = board[m + shift_row][n + shift_col]
-                            if not square.assigned and m != i and n != j:
-                                neighbors.add(square)
+            for m in range(size):
+                square = board[m][col]
+                if not square.assigned and m != row:
+                    neighbors.add(square)
 
-                    curr_square.neighbors = neighbors
+            shift_row = row // sg_row_total * sg_row_total
+            shift_col = col // sg_col_total * sg_col_total
+            for m in range(sg_row_total):
+                for n in range(sg_col_total):
+                    square = board[m + shift_row][n + shift_col]
+                    if not square.assigned and m != row and n != col:
+                        neighbors.add(square)
+
+            curr_square.neighbors = neighbors
 
     def solve_csp(self):
         """ CSP algorithms. """
-        if self.check_complete():
+
+        # Return true if all squares have been assigned a value
+        if len(self.unassigned) == 0:
             return True
 
         # TODO: check MAC at beginning
@@ -91,28 +96,15 @@ class CSP:
             #           inference = MAC()
             pass
 
-    def check_complete(self):
-        """
-        Check if assignments are complete.
-        :return: bool
-        """
-        complete = True
-        for row in self.board:
-            for square in row:
-                if len(square.domain) != 1:
-                    complete = False
-                    break
-
-        return complete
-
     def select_unassigned(self):
         """
         Select the best square to assign next using MRV and Degree heuristics.
         :return: a Square
         """
-        mrv_squares = self.find_mrv()
-        mrv_md_squares = self.find_max_degree(mrv_squares)
-        return mrv_md_squares[0]
+        squares = self.find_mrv()
+        if len(squares) > 1:
+            squares = self.find_max_degree(squares)
+        return squares[0]
 
     def find_mrv(self):
         """
@@ -121,15 +113,13 @@ class CSP:
         """
         min_size = self.size_data
         mrv = []
-        for row in self.board:
-            for square in row:
-                if not square.assigned:
-                    length = len(square.domain)
-                    if length < min_size:
-                        mrv = [square]
-                        min_size = length
-                    elif len(square.domain) == min_size:
-                        mrv.append(square)
+        for square in self.unassigned:
+            length = len(square.domain)
+            if length < min_size:
+                mrv = [square]
+                min_size = length
+            elif len(square.domain) == min_size:
+                mrv.append(square)
         return mrv
 
     def find_max_degree(self, squares):
@@ -148,3 +138,25 @@ class CSP:
             elif len(square.neighbors) == max_degree:
                 md.append(square)
         return md
+
+
+def test():
+    puzzle = [
+        [5, 0, 1, 0, 0, 0, 6, 0, 4],
+        [0, 9, 0, 3, 0, 6, 0, 5, 0],
+        [0, 0, 0, 0, 9, 0, 0, 0, 0],
+        [4, 0, 0, 0, 0, 0, 0, 0, 9],
+        [0, 0, 0, 1, 0, 9, 0, 0, 0],
+        [7, 0, 0, 0, 0, 0, 0, 0, 6],
+        [0, 0, 0, 0, 2, 0, 0, 0, 0],
+        [0, 8, 0, 5, 0, 7, 0, 6, 0],
+        [1, 0, 3, 0, 0, 0, 7, 0, 2]
+    ]
+    csp = CSP(puzzle)
+    csp.init_board()
+    csp.init_binary_constraints()
+    csp.solve_csp()
+
+
+if __name__ == "__main__":
+    test()
