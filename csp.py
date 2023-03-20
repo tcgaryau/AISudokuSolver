@@ -73,7 +73,6 @@ class CSP:
                     square = board[m + shift_row][n + shift_col]
                     if not square.assigned and m != row and n != col:
                         neighbors.add(square)
-
             curr_square.neighbors = neighbors
 
     def solve_csp(self):
@@ -86,15 +85,18 @@ class CSP:
         # TODO: check MAC at beginning
 
         next_empty = self.select_unassigned()
-
+        print(next_empty)
+        values = self.find_least_constraining_value(next_empty)
+        print(values)
         # TODO: order domain values: Least constraining value heuristic() -> values: []
-        values = next_empty.domain
-
-        for v in values:
-            #   if is_consistent(v)
-            #       assign v to next_empty
-            #           inference = MAC()
-            pass
+        # values = next_empty.domain
+        # values = self.ac3(next_empty)
+        # for v in values:
+        #
+        #     #   if is_consistent(v)
+        #     #       assign v to next_empty
+        #     #           inference = MAC()
+        #     pass
 
     def select_unassigned(self):
         """
@@ -139,22 +141,77 @@ class CSP:
                 md.append(square)
         return md
 
+    def ac3(self, square):
+        """
+        Check if the domain of a square is consistent with its neighbors.
+        :param square: a Square
+        :return: a boolean
+        """
+        domainPairs = []
+
+        for value in square.domain:
+            frequency = 0
+            for neighbor in square.neighbors:
+                if value in neighbor.domain:
+                    frequency += 1
+            domainPairs.append((frequency, value))
+        domainPairs.sort(key=lambda x: x[0])
+
+        return [x[1] for x in domainPairs]
+
+    def find_least_constraining_value(self, square):
+        """
+        Find the value that will eliminate the least number of values in the domain of its neighbors.
+        :param square: a Square
+        :return: a value
+        """
+        current_domain = square.domain
+        neighbour_frequency = {val: 0 for val in current_domain}
+
+        for val in current_domain:
+            for neighbour in square.neighbors:
+                if val in neighbour.domain:
+                    neighbour_frequency[val] += 1
+
+        min_val = None
+        for key, value in neighbour_frequency.items():
+            if min_val is None or value < neighbour_frequency[min_val]:
+                min_val = key
+        return sorted(neighbour_frequency, key=neighbour_frequency.get)
+
+
+
 
 def test():
+    # puzzle = [
+    #     [5, 0, 1, 0, 0, 0, 6, 0, 4],
+    #     [0, 9, 0, 3, 0, 6, 0, 5, 0],
+    #     [0, 0, 0, 0, 9, 0, 0, 0, 0],
+    #     [4, 0, 0, 0, 0, 0, 0, 0, 9],
+    #     [0, 0, 0, 1, 0, 9, 0, 0, 0],
+    #     [7, 0, 0, 0, 0, 0, 0, 0, 6],
+    #     [0, 0, 0, 0, 2, 0, 0, 0, 0],
+    #     [0, 8, 0, 5, 0, 7, 0, 6, 0],
+    #     [1, 0, 3, 0, 0, 0, 7, 0, 2]
+    # ]
     puzzle = [
-        [5, 0, 1, 0, 0, 0, 6, 0, 4],
-        [0, 9, 0, 3, 0, 6, 0, 5, 0],
-        [0, 0, 0, 0, 9, 0, 0, 0, 0],
-        [4, 0, 0, 0, 0, 0, 0, 0, 9],
-        [0, 0, 0, 1, 0, 9, 0, 0, 0],
-        [7, 0, 0, 0, 0, 0, 0, 0, 6],
-        [0, 0, 0, 0, 2, 0, 0, 0, 0],
-        [0, 8, 0, 5, 0, 7, 0, 6, 0],
-        [1, 0, 3, 0, 0, 0, 7, 0, 2]
+        [1,4,3,7,2,8,9,5,0],
+        [9,0,0,3,0,5,0,0,1],
+        [0,0,1,8,0,6,4,0,0],
+        [0,0,8,1,0,2,9,0,0],
+        [7,0,0,0,0,0,0,0,8],
+        [0,0,6,7,0,8,2,0,0],
+        [0,0,2,6,0,9,5,0,0],
+        [8,0,0,2,0,3,0,0,9],
+        [0,0,5,0,1,0,3,0,0]
     ]
     csp = CSP(puzzle)
     csp.init_board()
     csp.init_binary_constraints()
+    for i in csp.board:
+        for j in i:
+            print(j.row, j.col, j.domain)
+
     csp.solve_csp()
 
 

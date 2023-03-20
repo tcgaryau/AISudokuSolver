@@ -1,13 +1,13 @@
-# Byte-compiled / optimized / DLL files
+#Byte-compiled/optimized/DLLfiles
 __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
+#Cextensions
 *.so
 .idea
 
-# Distribution / packaging
+#Distribution/packaging
 .Python
 build/
 develop-eggs/
@@ -28,17 +28,17 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+#PyInstaller
+#Usuallythesefilesarewrittenbyapythonscriptfromatemplate
+#beforePyInstallerbuildstheexe,soastoinjectdate/otherinfosintoit.
 *.manifest
 *.spec
 
-# Installer logs
+#Installerlogs
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+#Unittest/coveragereports
 htmlcov/
 .tox/
 .nox/
@@ -52,57 +52,57 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
-# Translations
+#Translations
 *.mo
 *.pot
 
-# Django stuff:
+#Djangostuff:
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# Flask stuff:
+#Flaskstuff:
 instance/
 .webassets-cache
 
-# Scrapy stuff:
+#Scrapystuff:
 .scrapy
 
-# Sphinx documentation
+#Sphinxdocumentation
 docs/_build/
 
-# PyBuilder
+#PyBuilder
 target/
 
-# Jupyter Notebook
+#JupyterNotebook
 .ipynb_checkpoints
 
-# IPython
+#IPython
 profile_default/
 ipython_config.py
 
-# pyenv
+#pyenv
 .python-version
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
+#pipenv
+#Accordingtopypa/pipenv#598,itisrecommendedtoincludePipfile.lockinversioncontrol.
+#However,incaseofcollaboration,ifhavingplatform-specificdependenciesordependencies
+#havingnocross-platformsupport,pipenvmayinstalldependenciesthatdon'twork,ornot
+#installallneededdependencies.
 #Pipfile.lock
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+#PEP582;usedbye.g.github.com/David-OConnor/pyflow
 __pypackages__/
 
-# Celery stuff
+#Celerystuff
 celerybeat-schedule
 celerybeat.pid
 
-# SageMath parsed files
+#SageMathparsedfiles
 *.sage.py
 
-# Environments
+#Environments
 .env
 .venv
 env/
@@ -111,20 +111,20 @@ ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
+#Spyderprojectsettings
 .spyderproject
 .spyproject
 
-# Rope project settings
+#Ropeprojectsettings
 .ropeproject
 
-# mkdocs documentation
+#mkdocsdocumentation
 /site
 
-# mypy
+#mypy
 .mypy_cache/
 .dmypy.json
 dmypy.json
 
-# Pyre type checker
+#Pyretypechecker
 .pyre/
