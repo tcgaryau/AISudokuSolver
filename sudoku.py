@@ -239,22 +239,13 @@ class SudokuBoard:
                 self.draw_whole_grid(self.size_data, self.size_data, int(
                     math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)))
                 break
-            # elif brute_force.num_branch_fail < brute_force.max_fail:
-            #     self.display_message("Invalid board. No solution found.")
-            #     break
-            if brute_force.max_fail < brute_force.num_branch_fail:
+            elif brute_force.current_limit < brute_force.max_fail:
+                self.display_message("This is an invalid board that has no solution.")
+                break
+            if brute_force.max_fail < brute_force.current_limit:
                 brute_force.increase_max_depth()
-            # brute_force.increase_max_depth()
         else:
             self.display_message("Timer ran out. No solution found.")
-
-        # if brute_force.solve_brute_force():
-        #     self.puzzle_data = brute_force.return_board()
-        #     print(f"Brute Force took {time.time() - start} s")
-        #     self.draw_whole_grid(self.size_data, self.size_data, int(
-        #         math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)))
-        # else:
-        #     self.display_message("No solution found.")
 
     def solve_csp(self):
         if len(cells) == 0:

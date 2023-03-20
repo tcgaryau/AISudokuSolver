@@ -11,6 +11,7 @@ class BruteForce:
         self.sg_row_total = 0
         self.sg_col_total = 0
         self.size_data = size_data
+        self.current_limit = 0
 
         self.num_branch_fail = 0
         self.max_fail = size_data * size_data * 1000
@@ -41,6 +42,7 @@ class BruteForce:
 
             # if we've reached the max_depth, reset the counter and continue
             if is_first and self.num_branch_fail >= self.max_fail:
+                self.current_limit = self.num_branch_fail
                 self.num_branch_fail = 0
                 continue
 
@@ -107,4 +109,3 @@ class BruteForce:
 
     def increase_max_depth(self):
         self.max_fail = self.max_fail * 1.05
-        print(self.max_fail)
