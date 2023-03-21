@@ -1,4 +1,5 @@
 import math
+import copy
 
 
 class Square:
@@ -14,9 +15,21 @@ class Square:
         self.assigned = assigned
         self.domain = domain
         self.neighbors = None
+        # TODO: add a subgrid store
 
     def __str__(self):
         return f"{self.row} {self.col} {self.domain} {self.neighbors}"
+
+
+class Arc:
+    """
+    Represent an arc between two squares.
+    Each arc has a start square and an end square.
+    """
+
+    def __init__(self, square1, square2):
+        self.square1 = square1
+        self.square2 = square2
 
 
 class CSP:
@@ -29,6 +42,7 @@ class CSP:
         self.size_data = len(puzzle_data)
         self.board = None
         self.unassigned = set()
+        self.arcs = set()
 
     def init_board(self):
         """ Initialize a sudoku board as a 2D array of Squares, and the domain of each square. """
@@ -39,7 +53,8 @@ class CSP:
             for j in range(size):
                 value = puzzle[i][j]
                 if value == 0:
-                    square = Square(i, j, self._get_consistent_values(i, j))
+                    square = Square(i, j, list(
+                        self._get_consistent_values(i, j)))
                     board[i][j] = square
                     self.unassigned.add(square)
                 else:
@@ -56,7 +71,8 @@ class CSP:
         size = self.size_data
         sg_row_total = int(math.sqrt(size))
         sg_col_total = int(math.ceil(math.sqrt(size)))
-        set_index = (row // sg_row_total) * sg_col_total + (col // sg_col_total)
+        set_index = (row // sg_row_total) * \
+            sg_col_total + (col // sg_col_total)
         consistent_values = set(range(1, size + 1)) - set(
             list(self.row_set[row]) + list(self.col_set[col]) + list(self.sub_grid_set[set_index]))
         return consistent_values
@@ -100,15 +116,25 @@ class CSP:
             return True
 
         next_empty = self.select_unassigned()
-        print(next_empty)
         values = self.find_least_constraining_value(next_empty)
-        print(values)
-        # for v in values:
-        #
-        #     #   if is_consistent(v)
-        #     #       assign v to next_empty
-        #     #           inference = MAC()
-        #     pass
+        for v in values:
+            if self.ac3_is_consistent(next_empty, v):
+                next_empty.domain = [v]
+                if self.ac3(next_empty):
+                    next_empty.assigned = True
+                    self.unassigned.remove(next_empty)
+                    if self.solve_csp():
+                        return True
+                    next_empty.domain = values
+                    next_empty.assigned = False
+                self.unassigned.add(next_empty)
+        return False
+
+    def ac3_is_consistent(self, next_empty, v):
+        for neighbor in next_empty.neighbors:
+            if v in neighbor.domain and len(neighbor.domain) == 1:
+                return False
+        return True
 
     def select_unassigned(self):
         """
@@ -159,17 +185,54 @@ class CSP:
         :param square: a Square
         :return: a boolean
         """
-        domainPairs = []
+        arcs = set()
 
-        for value in square.domain:
-            frequency = 0
-            for neighbor in square.neighbors:
-                if value in neighbor.domain:
-                    frequency += 1
-            domainPairs.append((frequency, value))
-        domainPairs.sort(key=lambda x: x[0])
+        for neighbor in square.neighbors:
+            arcs.add(Arc(neighbor, square))
 
-        return [x[1] for x in domainPairs]
+        while len(arcs) > 0:
+            arc = arcs.pop()
+            if self.revise(arc):
+                if len(arc.square1.domain) == 0:
+                    return False
+                for neighbor in arc.square1.neighbors:
+                    arcs.add(Arc(neighbor, arc.square1))
+        return True
+        # for value in square.domain:
+        #     frequency = 0
+        #     for neighbor in square.neighbors:
+        #         if value in neighbor.domain:
+        #             frequency += 1
+        #     domainPairs.append((frequency, value))
+        # domainPairs.sort(key=lambda x: x[0])
+
+        # return [x[1] for x in domainPairs]
+
+    def revise(self, arc):
+        """
+        Check if the domain of a square is consistent with its neighbors.
+        :param arc: an Arc
+        :return: a boolean
+        """
+        revised = False
+        # TODO search newboard for arc.square1
+        for value in arc.square1.domain:
+            if not self.is_consistent(value, arc.square2):
+                arc.square1.domain.remove(value)
+                revised = True
+        return revised
+
+    def is_consistent(self, value, square2):
+        """
+        Check if a value is consistent with a square.
+        :param value: a value
+        :param square: a Square
+        :return: a boolean
+        """
+        return value not in square2.domain
+
+    # Square1 {1,2}
+    # Square2 {3,4,5}
 
     def find_least_constraining_value(self, square):
         """
@@ -185,18 +248,27 @@ class CSP:
                 if val in neighbour.domain:
                     neighbour_frequency[val] += 1
 
-        min_val = None
-        for key, value in neighbour_frequency.items():
-            if min_val is None or value < neighbour_frequency[min_val]:
-                min_val = key
+        # min_val = None
+        # for key, value in neighbour_frequency.items():
+        #     if min_val is None or value < neighbour_frequency[min_val]:
+        #         min_val = key
         return sorted(neighbour_frequency, key=neighbour_frequency.get)
 
 
-
-
 def test():
+    puzzle = [
+        [0, 0, 0, 5, 0, 3, 0, 0, 2],
+        [0, 0, 1, 0, 6, 8, 0, 0, 0],
+        [0, 0, 0, 0, 4, 0, 0, 0, 0],
+        [0, 0, 0, 0, 2, 0, 0, 0, 5],
+        [9, 0, 0, 0, 0, 0, 7, 0, 1],
+        [0, 8, 0, 9, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 5, 0],
+        [0, 0, 9, 0, 0, 0, 0, 8, 0],
+        [0, 0, 6, 0, 0, 0, 0, 3, 9]
+    ]
     # puzzle = [
-    #     [5, 0, 1, 0, 0, 0, 6, 0, 4],
+    #     [4, 0, 1, 0, 0, 0, 6, 0, 4],
     #     [0, 9, 0, 3, 0, 6, 0, 5, 0],
     #     [0, 0, 0, 0, 9, 0, 0, 0, 0],
     #     [4, 0, 0, 0, 0, 0, 0, 0, 9],
@@ -206,27 +278,33 @@ def test():
     #     [0, 8, 0, 5, 0, 7, 0, 6, 0],
     #     [1, 0, 3, 0, 0, 0, 7, 0, 2]
     # ]
-    puzzle = [
-        [1,4,3,7,2,8,9,5,0],
-        [9,0,0,3,0,5,0,0,1],
-        [0,0,1,8,0,6,4,0,0],
-        [0,0,8,1,0,2,9,0,0],
-        [7,0,0,0,0,0,0,0,8],
-        [0,0,6,7,0,8,2,0,0],
-        [0,0,2,6,0,9,5,0,0],
-        [8,0,0,2,0,3,0,0,9],
-        [0,0,5,0,1,0,3,0,0]
-    ]
+    # puzzle = [
+    #     [1, 4, 3, 7, 2, 8, 9, 5, 0],
+    #     [9, 0, 0, 3, 0, 5, 0, 0, 1],
+    #     [0, 0, 1, 8, 0, 6, 4, 0, 0],
+    #     [0, 0, 8, 1, 0, 2, 9, 0, 0],
+    #     [7, 0, 0, 0, 0, 0, 0, 0, 8],
+    #     [0, 0, 6, 7, 0, 8, 2, 0, 0],
+    #     [0, 0, 2, 6, 0, 9, 5, 0, 0],
+    #     [8, 0, 0, 2, 0, 3, 0, 0, 9],
+    #     [0, 0, 5, 0, 1, 0, 3, 0, 0]
+    # ]
 
     row_set, col_set, sub_grid_set = test_generate_sets(puzzle)
     csp = CSP(puzzle, row_set, col_set, sub_grid_set)
     csp.init_board()
     csp.init_binary_constraints()
+    print("Initial Board")
     for i in csp.board:
         for j in i:
             print(j.row, j.col, j.domain)
 
     csp.solve_csp()
+    print()
+    print("Solved Board")
+    for i in csp.board:
+        for j in i:
+            print(j.row, j.col, j.domain)
 
 
 def test_generate_sets(puzzle_data):
