@@ -61,6 +61,7 @@ class CSP:
                     board[i][j] = Square(i, j, [value], True)
         self.board = board
 
+
     def _get_consistent_values(self, row, col):
         """
         Get values for a squares that are consistent with existing assignments.
@@ -72,7 +73,7 @@ class CSP:
         sg_row_total = int(math.sqrt(size))
         sg_col_total = int(math.ceil(math.sqrt(size)))
         set_index = (row // sg_row_total) * \
-            sg_col_total + (col // sg_col_total)
+                    sg_col_total + (col // sg_col_total)
         consistent_values = set(range(1, size + 1)) - set(
             list(self.row_set[row]) + list(self.col_set[col]) + list(self.sub_grid_set[set_index]))
         return consistent_values
@@ -117,7 +118,6 @@ class CSP:
 
         next_empty = self.select_unassigned()
         values = self.find_least_constraining_value(next_empty)
-        print("VALUES", values)
         saved_values = copy.deepcopy(values)
         for v in values:
             if self.ac3_is_consistent(next_empty, v):
@@ -135,14 +135,17 @@ class CSP:
         return False
 
     def ac3_is_consistent(self, next_empty, v):
-        print("Current value", v, "FOR SQUARE", next_empty)
+        print("Current value", v, "FOR SQUARE", next_empty.row, next_empty.col, next_empty.domain)
         for neighbor in next_empty.neighbors:
-            if len(neighbor.domain) == 1:
+            # if len(neighbor.domain) == 1 and v in neighbor.domain:
+            #     print("Checking", v, "vs", neighbor.domain)
+            #     return False
+            #     # if v in neighbor.domain:
+            #     #     return False
+            if neighbor.assigned and v in neighbor.domain:
                 print("Checking", v, "vs", neighbor.domain)
-                if v in neighbor.domain:
-                    return False
+                return False
         return True
-
 
 
     def select_unassigned(self):
@@ -194,28 +197,23 @@ class CSP:
         :param square: a Square
         :return: a boolean
         """
-        arcs = set()
+        arcs = []
 
-        for neighbor in [neighbor for neighbor in square.neighbors if not neighbor.assigned]:
-            arcs.add(Arc(neighbor, square))
+        # for neighbor in [neighbor for neighbor in square.neighbors if not neighbor.assigned]:
+        for neighbor in square.neighbors:
+            arcs.append(Arc(neighbor, square))
 
-        while len(arcs) > 0:
+        while arcs:
             arc = arcs.pop()
             if self.revise(arc):
                 if len(arc.square1.domain) == 0:
                     return False
-                for neighbor in [neighbor for neighbor in arc.square1.neighbors if not neighbor.assigned]:
-                    arcs.add(Arc(neighbor, arc.square1))
+                # for neighbor in [neighbor for neighbor in arc.square1.neighbors
+                #                  if not neighbor.assigned and neighbor != arc.square2]:
+                for neighbor in arc.square1.neighbors:
+                    if neighbor != arc.square2:
+                        arcs.append(Arc(neighbor, arc.square1))
         return True
-        # for value in square.domain:
-        #     frequency = 0
-        #     for neighbor in square.neighbors:
-        #         if value in neighbor.domain:
-        #             frequency += 1
-        #     domainPairs.append((frequency, value))
-        # domainPairs.sort(key=lambda x: x[0])
-
-        # return [x[1] for x in domainPairs]
 
     def revise(self, arc):
         """
@@ -224,10 +222,21 @@ class CSP:
         :return: a boolean
         """
         revised = False
-        # TODO search newboard for arc.square1
-        for value in arc.square1.domain:
-            if not self.is_consistent(value, arc.square2):
-                arc.square1.domain.remove(value)
+        # for value in arc.square1.domain:
+        #     if not self.is_consistent(value, arc.square2):
+        #         print("REMOVED", value, "FROM", arc.square1.row, arc.square1.col, arc.square1.domain)
+        #         arc.square1.domain.remove(value)
+        #         # print("REMAINING", arc.square1.domain)
+        #         revised = True
+
+        for x in arc.square1.domain:
+
+            if any(x != y for y in arc.square2.domain):
+                revised = False
+            else:
+                print("REMOVED", x, "FROM", arc.square1.row, arc.square1.col,
+                      arc.square1.domain)
+                arc.square1.domain.remove(x)
                 revised = True
         return revised
 
@@ -235,14 +244,21 @@ class CSP:
         """
         Check if a value is consistent with a square.
         :param value: a value
-        :param square: a Square
+        :param square2: a Square
         :return: a boolean
         """
+        # print("CHECKING consistency", value, "vs", square2.domain)
 
         return value not in square2.domain
 
-    # Square1 {1,2}
-    # Square2 {3,4,5}
+        # for domain_value in square2.domain:
+        #     if domain_value != value:
+        #         return False
+        #
+        # return True
+
+    # current {1,2,3}
+    # neighbour {3,4,5}
 
     def find_least_constraining_value(self, square):
         """
