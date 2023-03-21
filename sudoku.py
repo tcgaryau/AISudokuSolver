@@ -7,6 +7,7 @@ import math
 from brute_force import BruteForce
 
 cells = {}
+btnFont = ("Californian FB", 15)
 
 
 class SudokuBoard:
@@ -17,8 +18,10 @@ class SudokuBoard:
         self.row_set = None
         self.col_set = None
         self.sub_grid_set = None
+        self.selected_100x100 = False
 
         self.main_frame = None
+        self.bottom_frame = None
         self.main_height = None
 
         self.clicked = None
@@ -97,6 +100,7 @@ class SudokuBoard:
                 colour = self.change_colour(colour)
 
     def submit(self):
+        self.bottom_frame.children['!button2'].configure(state="active")
         match self.clicked.get():
             case "9x9":
                 self.generate_board(9)
@@ -112,6 +116,7 @@ class SudokuBoard:
                 self.draw_whole_grid(25, 25, 5, 5)
             case "100x100":
                 self.generate_board(100)
+                self.bottom_frame.children['!button2'].configure(state="disabled")
                 self.draw_whole_grid(100, 100, 10, 10)
             case "Select Options":
                 self.draw_whole_grid(self.size_data, self.size_data, int(
@@ -209,13 +214,14 @@ class SudokuBoard:
             "25x25",
             "100x100"
         ]
-        btn_input_file = Button(self.main_frame, text="Choose File",
-                                command=self.browse_files, width=15)
+        btn_input_file = Button(self.main_frame, text="Choose File", font=btnFont,
+                                command=self.browse_files, width=15, height=2)
         btn_input_file.pack()
         self.clicked.set("Select Options")
         drop = OptionMenu(self.main_frame, self.clicked, *options)
+        drop.config(font=btnFont, width=13, height=2)
         drop.pack()
-        button = Button(self.main_frame, text="Submit", command=self.submit, width=15)
+        button = Button(self.main_frame, text="Submit", font=btnFont, command=self.submit, width=15, height=2)
         button.pack()
 
     def display_message(self, msg):
@@ -254,38 +260,38 @@ class SudokuBoard:
     def main(self):
         root = Tk()
         root.geometry("900x900")
-        # root.attributes('-fullscreen', True)
+        root.attributes('-fullscreen', True)
         root.title("AI Sudoku Solver")
 
         self.clicked = StringVar()
 
         self.main_frame = Frame(root)
         self.main_height = root.winfo_screenheight() - root.winfo_screenheight() * 0.25
-        Label(self.main_frame, text="Welcome User").grid(
-            row=0, column=0, columnspan=5)
+        Label(self.main_frame, text="Welcome User", font=("Arial", 24)).grid(
+            row=0, column=0, columnspan=5, ipady=10)
 
-        self.main_frame.pack(side=TOP)
+        self.main_frame.pack(side=TOP, pady=20)
 
-        bottomFrame = Frame(root)
+        self.bottom_frame = Frame(root)
 
-        bottomFrame.pack(side=BOTTOM, pady=20)
-        btn_create = Button(bottomFrame, text="Create Sudoku",
-                            command=self.create_sudoku, width=15)
+        self.bottom_frame.pack(side=BOTTOM, pady=20)
+        btn_create = Button(self.bottom_frame, text="Create Sudoku", font=btnFont,
+                            command=self.create_sudoku, width=15, height=2)
         btn_create.grid(row=0, column=0)
 
         btn_solve_heuristic = Button(
-            bottomFrame, text="Solve (heuristic)", command=self.on_click_solve_brute_force,
-            width=15)
+            self.bottom_frame, text="Solve (heuristic)", font=btnFont, command=self.on_click_solve_brute_force,
+            width=15, height=2)
         btn_solve_heuristic.grid(row=0, column=4)
 
-        btn_solve_csp = Button(bottomFrame, text="Solve (CSP)",
-                               command=self.solve_csp, width=15)
+        btn_solve_csp = Button(self.bottom_frame, text="Solve (CSP)", font=btnFont,
+                               command=self.solve_csp, width=15, height=2)
         btn_solve_csp.grid(row=0, column=8)
 
-        btn_clear = Button(bottomFrame, text="Clear", command=self.clear, width=15)
+        btn_clear = Button(self.bottom_frame, text="Clear", font=btnFont, command=self.clear, width=15, height=2)
         btn_clear.grid(row=0, column=12)
 
-        btn_exit = Button(bottomFrame, text="Exit", command=exit, width=15)
+        btn_exit = Button(self.bottom_frame, text="Exit", font=btnFont, command=exit, width=15, height=2)
         btn_exit.grid(row=0, column=16)
 
         root.mainloop()
