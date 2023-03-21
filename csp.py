@@ -1,5 +1,6 @@
 import math
 import copy
+import itertools
 
 
 class Square:
@@ -43,6 +44,7 @@ class CSP:
         self.board = None
         self.unassigned = set()
         self.arcs = set()
+        self.revised = []
 
     def init_board(self):
         """ Initialize a sudoku board as a 2D array of Squares, and the domain of each square. """
@@ -61,6 +63,25 @@ class CSP:
                     board[i][j] = Square(i, j, [value], True)
         self.board = board
 
+    def init_constraints(self):
+        """ Populate the neighbors field of every square on the current board. """
+        board = self.board
+        size = self.size_data
+        for i, j in itertools.product(range(size), range(size)):
+            square = board[i][j]
+            for arc in self._get_arcs(square):
+                self.arcs.add(arc)
+
+    def _get_neighbors(self, square):
+        # print(square.neighbors)
+        return square.neighbors
+
+    def _get_arcs(self, square):
+        neighbors = self._get_neighbors(square)
+        arcs = []
+        arcs += [Arc(square, neighbor) for neighbor in neighbors]
+        arcs += [Arc(neighbor, square) for neighbor in neighbors]
+        return arcs
 
     def _get_consistent_values(self, row, col):
         """
@@ -85,31 +106,34 @@ class CSP:
         sg_row_total = int(math.sqrt(size))
         sg_col_total = int(math.ceil(math.sqrt(size)))
 
-        for curr_square in self.unassigned:
-            row = curr_square.row
-            col = curr_square.col
-            neighbors = set()
+        for i in range(size):
+            for j in range(size):
+                curr_square = board[i][j]
+        # for curr_square in self.unassigned:
+                row = curr_square.row
+                col = curr_square.col
+                neighbors = set()
 
-            for n in range(size):
-                square = board[row][n]
-                if n != col:
-                    neighbors.add(square)
-
-            for m in range(size):
-                square = board[m][col]
-                if m != row:
-                    neighbors.add(square)
-
-            shift_row = row // sg_row_total * sg_row_total
-            shift_col = col // sg_col_total * sg_col_total
-            for m in range(sg_row_total):
-                for n in range(sg_col_total):
-                    square = board[m + shift_row][n + shift_col]
-                    if m != row and n != col:
+                for n in range(size):
+                    square = board[row][n]
+                    if n != col:
                         neighbors.add(square)
-            curr_square.neighbors = neighbors
 
-    def solve_csp(self):
+                for m in range(size):
+                    square = board[m][col]
+                    if m != row:
+                        neighbors.add(square)
+
+                shift_row = row // sg_row_total * sg_row_total
+                shift_col = col // sg_col_total * sg_col_total
+                for m in range(sg_row_total):
+                    for n in range(sg_col_total):
+                        square = board[m + shift_row][n + shift_col]
+                        if m != row and n != col:
+                            neighbors.add(square)
+                curr_square.neighbors = neighbors
+
+    def solve_csp(self, itnum=0):
         """ CSP algorithms. """
 
         # Return true if all squares have been assigned a value
@@ -121,32 +145,40 @@ class CSP:
         saved_values = copy.deepcopy(values)
         for v in values:
             if self.ac3_is_consistent(next_empty, v):
-                print("AC3 PASSED")
                 next_empty.domain = [v]
-                if self.ac3(next_empty):
-                    print("HELLO")
+                result, revised_list = self.ac3(next_empty)
+                if result:
                     next_empty.assigned = True
                     self.unassigned.remove(next_empty)
-                    if self.solve_csp():
+                    if self.solve_csp(itnum+1):
                         return True
                     next_empty.domain = saved_values
                     next_empty.assigned = False
                 self.unassigned.add(next_empty)
+                for row, col, value in revised_list:
+                    self.board[row][col].domain.append(value)
+                # revised_list.clear()
+                #
+                # print()
+                # print("Reset Board")
+                # for i in self.board:
+                #     for j in i:
+                #         print(j.row, j.col, j.domain)
+        # next_empty.domain = saved_values
         return False
 
     def ac3_is_consistent(self, next_empty, v):
-        print("Current value", v, "FOR SQUARE", next_empty.row, next_empty.col, next_empty.domain)
+        # print("Current value", v, "FOR SQUARE", next_empty.row, next_empty.col, next_empty.domain)
         for neighbor in next_empty.neighbors:
-            # if len(neighbor.domain) == 1 and v in neighbor.domain:
-            #     print("Checking", v, "vs", neighbor.domain)
-            #     return False
-            #     # if v in neighbor.domain:
-            #     #     return False
-            if neighbor.assigned and v in neighbor.domain:
+            if len(neighbor.domain) == 1 and v in neighbor.domain:
                 print("Checking", v, "vs", neighbor.domain)
                 return False
+            # if v in neighbor.domain:
+            #     return False
+            # if neighbor.assigned and v in neighbor.domain:
+            #     print("Checking", v, "vs", neighbor.domain)
+            #     return False
         return True
-
 
     def select_unassigned(self):
         """
@@ -197,25 +229,29 @@ class CSP:
         :param square: a Square
         :return: a boolean
         """
-        arcs = []
+        revised_list = []
+        # board_copy = copy.deepcopy(self.board)
 
         # for neighbor in [neighbor for neighbor in square.neighbors if not neighbor.assigned]:
         for neighbor in square.neighbors:
-            arcs.append(Arc(neighbor, square))
+            self.arcs.add(Arc(neighbor, square))
 
-        while arcs:
-            arc = arcs.pop()
-            if self.revise(arc):
+        while self.arcs:
+            arc = self.arcs.pop()
+            print(arc)
+            result, revised_list = self.revise(arc, revised_list)
+
+            if result:
                 if len(arc.square1.domain) == 0:
-                    return False
+                    return False, revised_list
                 # for neighbor in [neighbor for neighbor in arc.square1.neighbors
                 #                  if not neighbor.assigned and neighbor != arc.square2]:
                 for neighbor in arc.square1.neighbors:
                     if neighbor != arc.square2:
-                        arcs.append(Arc(neighbor, arc.square1))
-        return True
+                        self.arcs.add(Arc(neighbor, arc.square1))
+        return True, revised_list
 
-    def revise(self, arc):
+    def revise(self, arc, revised_list):
         """
         Check if the domain of a square is consistent with its neighbors.
         :param arc: an Arc
@@ -228,7 +264,6 @@ class CSP:
         #         arc.square1.domain.remove(value)
         #         # print("REMAINING", arc.square1.domain)
         #         revised = True
-
         for x in arc.square1.domain:
 
             if any(x != y for y in arc.square2.domain):
@@ -237,8 +272,9 @@ class CSP:
                 print("REMOVED", x, "FROM", arc.square1.row, arc.square1.col,
                       arc.square1.domain)
                 arc.square1.domain.remove(x)
+                revised_list.append((arc.square1.row, arc.square1.col, x))
                 revised = True
-        return revised
+        return revised, revised_list
 
     def is_consistent(self, value, square2):
         """
@@ -320,6 +356,7 @@ def test():
     csp = CSP(puzzle, row_set, col_set, sub_grid_set)
     csp.init_board()
     csp.init_binary_constraints()
+    csp.init_constraints()
     print("Initial Board")
     for i in csp.board:
         for j in i:
