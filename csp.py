@@ -39,10 +39,9 @@ class CSP:
             for j in range(size):
                 value = puzzle[i][j]
                 if value == 0:
-                    for num in range(1, size + 1):
-                        square = Square(i, j, self._get_consistent_values(i, j))
-                        board[i][j] = square
-                        self.unassigned.add(square)
+                    square = Square(i, j, self._get_consistent_values(i, j))
+                    board[i][j] = square
+                    self.unassigned.add(square)
                 else:
                     board[i][j] = Square(i, j, {value}, True)
         self.board = board
