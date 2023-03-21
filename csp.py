@@ -21,8 +21,11 @@ class Square:
 
 class CSP:
 
-    def __init__(self, puzzle_data):
-        self.puzzle_data = puzzle_data
+    def __init__(self, puzzle_data, row_set, col_set, sub_grid_set):
+        self.puzzle_data = puzzle_data.copy()
+        self.row_set = row_set.copy()
+        self.col_set = col_set.copy()
+        self.sub_grid_set = sub_grid_set.copy()
         self.size_data = len(puzzle_data)
         self.board = None
         self.unassigned = set()
@@ -36,13 +39,28 @@ class CSP:
             for j in range(size):
                 value = puzzle[i][j]
                 if value == 0:
-                    square = Square(i, j, set(range(1, size + 1)))
-                    board[i][j] = square
-                    self.unassigned.add(square)
+                    for num in range(1, size + 1):
+                        square = Square(i, j, self._get_consistent_values(i, j))
+                        board[i][j] = square
+                        self.unassigned.add(square)
                 else:
                     board[i][j] = Square(i, j, {value}, True)
-
         self.board = board
+
+    def _get_consistent_values(self, row, col):
+        """
+        Get values for a squares that are consistent with existing assignments.
+        :param row: a square's row number, int
+        :param col: a square's column number, int
+        :return: a set of consistent values
+        """
+        size = self.size_data
+        sg_row_total = int(math.sqrt(size))
+        sg_col_total = int(math.ceil(math.sqrt(size)))
+        set_index = (row // sg_row_total) * sg_col_total + (col // sg_col_total)
+        consistent_values = set(range(1, size + 1)) - set(
+            list(self.row_set[row]) + list(self.col_set[col]) + list(self.sub_grid_set[set_index]))
+        return consistent_values
 
     def init_binary_constraints(self):
         """ Populate the neighbors field of every square on the current board. """
@@ -82,15 +100,10 @@ class CSP:
         if len(self.unassigned) == 0:
             return True
 
-        # TODO: check MAC at beginning
-
         next_empty = self.select_unassigned()
         print(next_empty)
         values = self.find_least_constraining_value(next_empty)
         print(values)
-        # TODO: order domain values: Least constraining value heuristic() -> values: []
-        # values = next_empty.domain
-        # values = self.ac3(next_empty)
         # for v in values:
         #
         #     #   if is_consistent(v)
@@ -120,7 +133,7 @@ class CSP:
             if length < min_size:
                 mrv = [square]
                 min_size = length
-            elif len(square.domain) == min_size:
+            elif length == min_size:
                 mrv.append(square)
         return mrv
 
@@ -137,7 +150,7 @@ class CSP:
             if degree > max_degree:
                 md = [square]
                 max_degree = degree
-            elif len(square.neighbors) == max_degree:
+            elif degree == max_degree:
                 md.append(square)
         return md
 
@@ -205,7 +218,9 @@ def test():
         [8,0,0,2,0,3,0,0,9],
         [0,0,5,0,1,0,3,0,0]
     ]
-    csp = CSP(puzzle)
+
+    row_set, col_set, sub_grid_set = test_generate_sets(puzzle)
+    csp = CSP(puzzle, row_set, col_set, sub_grid_set)
     csp.init_board()
     csp.init_binary_constraints()
     for i in csp.board:
@@ -213,6 +228,23 @@ def test():
             print(j.row, j.col, j.domain)
 
     csp.solve_csp()
+
+
+def test_generate_sets(puzzle_data):
+    puzzle_size = len(puzzle_data)
+    row_set = [set() for _ in range(puzzle_size)]
+    col_set = [set() for _ in range(puzzle_size)]
+    sub_grid_set = [set() for _ in range(puzzle_size)]
+    for i in range(puzzle_size):
+        for j in range(puzzle_size):
+            num = puzzle_data[i][j]
+            row_set[i].add(num)
+            col_set[j].add(num)
+            sub_grid_set[(i // int(math.sqrt(puzzle_size)))
+                         * int(math.sqrt(puzzle_size))
+                         + (j // int(math.ceil(math.sqrt(puzzle_size))))].add(num)
+
+    return row_set, col_set, sub_grid_set
 
 
 if __name__ == "__main__":
