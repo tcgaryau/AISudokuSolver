@@ -58,7 +58,7 @@ class CSP:
                     board[i][j] = square
                     self.unassigned.add(square)
                 else:
-                    board[i][j] = Square(i, j, {value}, True)
+                    board[i][j] = Square(i, j, [value], True)
         self.board = board
 
     def _get_consistent_values(self, row, col):
@@ -91,12 +91,12 @@ class CSP:
 
             for n in range(size):
                 square = board[row][n]
-                if not square.assigned and n != col:
+                if n != col:
                     neighbors.add(square)
 
             for m in range(size):
                 square = board[m][col]
-                if not square.assigned and m != row:
+                if m != row:
                     neighbors.add(square)
 
             shift_row = row // sg_row_total * sg_row_total
@@ -104,7 +104,7 @@ class CSP:
             for m in range(sg_row_total):
                 for n in range(sg_col_total):
                     square = board[m + shift_row][n + shift_col]
-                    if not square.assigned and m != row and n != col:
+                    if m != row and n != col:
                         neighbors.add(square)
             curr_square.neighbors = neighbors
 
@@ -117,24 +117,33 @@ class CSP:
 
         next_empty = self.select_unassigned()
         values = self.find_least_constraining_value(next_empty)
+        print("VALUES", values)
+        saved_values = copy.deepcopy(values)
         for v in values:
             if self.ac3_is_consistent(next_empty, v):
+                print("AC3 PASSED")
                 next_empty.domain = [v]
                 if self.ac3(next_empty):
+                    print("HELLO")
                     next_empty.assigned = True
                     self.unassigned.remove(next_empty)
                     if self.solve_csp():
                         return True
-                    next_empty.domain = values
+                    next_empty.domain = saved_values
                     next_empty.assigned = False
                 self.unassigned.add(next_empty)
         return False
 
     def ac3_is_consistent(self, next_empty, v):
+        print("Current value", v, "FOR SQUARE", next_empty)
         for neighbor in next_empty.neighbors:
-            if v in neighbor.domain and len(neighbor.domain) == 1:
-                return False
+            if len(neighbor.domain) == 1:
+                print("Checking", v, "vs", neighbor.domain)
+                if v in neighbor.domain:
+                    return False
         return True
+
+
 
     def select_unassigned(self):
         """
@@ -171,7 +180,7 @@ class CSP:
         max_degree = 0
         md = []
         for square in squares:
-            degree = len(square.neighbors)
+            degree = len([neighbor for neighbor in square.neighbors if not neighbor.assigned])
             if degree > max_degree:
                 md = [square]
                 max_degree = degree
@@ -187,7 +196,7 @@ class CSP:
         """
         arcs = set()
 
-        for neighbor in square.neighbors:
+        for neighbor in [neighbor for neighbor in square.neighbors if not neighbor.assigned]:
             arcs.add(Arc(neighbor, square))
 
         while len(arcs) > 0:
@@ -195,7 +204,7 @@ class CSP:
             if self.revise(arc):
                 if len(arc.square1.domain) == 0:
                     return False
-                for neighbor in arc.square1.neighbors:
+                for neighbor in [neighbor for neighbor in arc.square1.neighbors if not neighbor.assigned]:
                     arcs.add(Arc(neighbor, arc.square1))
         return True
         # for value in square.domain:
@@ -229,6 +238,7 @@ class CSP:
         :param square: a Square
         :return: a boolean
         """
+
         return value not in square2.domain
 
     # Square1 {1,2}
@@ -244,7 +254,7 @@ class CSP:
         neighbour_frequency = {val: 0 for val in current_domain}
 
         for val in current_domain:
-            for neighbour in square.neighbors:
+            for neighbour in [neighbor for neighbor in square.neighbors if not neighbor.assigned]:
                 if val in neighbour.domain:
                     neighbour_frequency[val] += 1
 
