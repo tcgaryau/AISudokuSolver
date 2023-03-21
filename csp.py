@@ -71,7 +71,8 @@ class CSP:
         for i, j in itertools.product(range(size), range(size)):
             square = board[i][j]
             for arc in self._get_arcs(square):
-                self.arcs.add(arc)
+                if arc.square1.row != arc.square2.row and arc.square1.col != arc.square2.col:
+                    self.arcs.add(arc)
         print(len(self.arcs))
 
     def _get_neighbors(self, square):
@@ -95,10 +96,12 @@ class CSP:
         sg_row_total = int(math.sqrt(size))
         sg_col_total = int(math.ceil(math.sqrt(size)))
         set_index = (row // sg_row_total) * \
-                    sg_col_total + (col // sg_col_total)
-        consistent_values = set(range(1, size + 1)) - set(
-            list(self.row_set[row]) + list(self.col_set[col]) + list(self.sub_grid_set[set_index]))
-        return consistent_values
+                        sg_col_total + (col // sg_col_total)
+        return set(range(1, size + 1)) - set(
+            list(self.row_set[row])
+            + list(self.col_set[col])
+            + list(self.sub_grid_set[set_index])
+        )
 
     def init_binary_constraints(self):
         """ Populate the neighbors field of every square on the current board. """
@@ -147,11 +150,13 @@ class CSP:
         values = self.find_least_constraining_value(next_empty)
         saved_values = copy.deepcopy(values)
         for v in values:
+            print("before consistent check", v)
             if self.ac3_is_consistent(next_empty, v):
-                print("Last")
+                print("Last", v)
                 next_empty.domain = [v]
                 result, revised_list = self.ac3(next_empty)
                 if result:
+
                     next_empty.assigned = True
                     self.unassigned.remove(next_empty)
                     if self.solve_csp():
@@ -163,7 +168,6 @@ class CSP:
                 next_empty.domain = saved_values
                 for row, col, value in revised_list:
                     self.board[row][col].domain.append(value)
-            print("Failed")
         for i in range(self.size_data):
             for j in range(self.size_data):
                 print(self.board[i][j].domain, end=" ")
@@ -230,18 +234,21 @@ class CSP:
         """
         revised_list = []
 
+        for neighbor in square.neighbors:
+            if not neighbor.assigned and neighbor != square:
+                self.arcs.add(Arc(neighbor, square))
+
         while self.arcs:
             arc = self.arcs.pop()
             result, revised_list = self.revise(arc, revised_list)
 
             if result:
-                print("Revised!")
                 if len(arc.square1.domain) == 0:
                     return False, revised_list
                 # for neighbor in [neighbor for neighbor in arc.square1.neighbors
                 #                  if not neighbor.assigned and neighbor != arc.square2]:
                 for neighbor in arc.square1.neighbors:
-                    if neighbor != arc.square2:
+                    if neighbor not in [arc.square2, arc.square1]:
                         self.arcs.add(Arc(neighbor, arc.square1))
         return True, revised_list
 
@@ -253,6 +260,7 @@ class CSP:
         """
         revised = False
         for x in arc.square1.domain:
+            print("X", x, "Square1", arc.square1.row, arc.square1.col, "Square2", arc.square2.row, arc.square2.col)
             # Xi's domain = {1 2 3}, Xj's domain = {1}
             if len(arc.square2.domain) == 1 and x in arc.square2.domain:
                 print("REMOVED", x, "FROM", arc.square1.row, arc.square1.col,
@@ -323,8 +331,8 @@ class CSP:
 
 def test():
     puzzle = [
-        [8, 9, 4, 5, 1, 3, 6, 7, 2],
-        [5, 7, 1, 2, 6, 8, 9, 4, 3],
+        [0, 0, 0, 5, 0, 3, 0, 0, 2],
+        [0, 0, 1, 0, 6, 8, 0, 0, 0],
         [3, 6, 2, 7, 4, 9, 5, 1, 8],
         [1, 4, 3, 6, 2, 7, 8, 9, 5],
         [9, 2, 5, 8, 3, 4, 7, 6, 1],
