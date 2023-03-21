@@ -137,14 +137,7 @@ class SudokuBoard:
 
         # Change label contents
         label_file_explorer.configure(text=f"File Opened: {filename}")
-        # try:
-        #     with open(filename, "r") as f:
-        #         file_data = f.read().strip()
-        #         global puzzle_data, size_data
-        #         puzzle_data, size_data = parse_input_file(file_data)
-        # except Exception as e:
-        #     label_file_explorer.destroy()
-        #     print(e)
+
         with open(filename, "r") as f:
             file_data = f.read().strip()
             self.puzzle_data, self.size_data = self.parse_input_file(file_data)
@@ -181,8 +174,10 @@ class SudokuBoard:
         print(['' if num == 0 else num for row in self.puzzle_data for num in row])
 
     def parse_input_file(self, data):
-        data = data.split(',')
-        puzzle_size = int(math.sqrt(len(data)))
+        data = data.split("\n")
+        puzzle_size = len(data)
+        data = [int(num) for row in data for num in row.split(',')]
+
         data = [0 if num == "" else int(num) for num in data]
         rows_of_input = [
             data[row * puzzle_size: row * puzzle_size + puzzle_size]
