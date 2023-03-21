@@ -71,15 +71,15 @@ class CSP:
             square = board[i][j]
             for arc in self._get_arcs(square):
                 self.arcs.add(arc)
+        print(len(self.arcs))
 
     def _get_neighbors(self, square):
-        # print(square.neighbors)
         return square.neighbors
 
     def _get_arcs(self, square):
         neighbors = self._get_neighbors(square)
         arcs = []
-        arcs += [Arc(square, neighbor) for neighbor in neighbors]
+        # arcs += [Arc(square, neighbor) for neighbor in neighbors]
         arcs += [Arc(neighbor, square) for neighbor in neighbors]
         return arcs
 
@@ -133,7 +133,7 @@ class CSP:
                             neighbors.add(square)
                 curr_square.neighbors = neighbors
 
-    def solve_csp(self, itnum=0):
+    def solve_csp(self):
         """ CSP algorithms. """
 
         # Return true if all squares have been assigned a value
@@ -146,25 +146,20 @@ class CSP:
         for v in values:
             if self.ac3_is_consistent(next_empty, v):
                 next_empty.domain = [v]
+                # self.board[next_empty.row][next_empty.col] = next_empty
+                print("SINGLE VALUES", self.board[next_empty.row][next_empty.col].domain)
                 result, revised_list = self.ac3(next_empty)
                 if result:
                     next_empty.assigned = True
                     self.unassigned.remove(next_empty)
-                    if self.solve_csp(itnum+1):
+                    if self.solve_csp():
                         return True
-                    next_empty.domain = saved_values
+                    # next_empty.domain = saved_values
                     next_empty.assigned = False
+                    next_empty.domain = saved_values.remove(v)
+                    for row, col, value in revised_list:
+                        self.board[row][col].domain.append(value)
                 self.unassigned.add(next_empty)
-                for row, col, value in revised_list:
-                    self.board[row][col].domain.append(value)
-                # revised_list.clear()
-                #
-                # print()
-                # print("Reset Board")
-                # for i in self.board:
-                #     for j in i:
-                #         print(j.row, j.col, j.domain)
-        # next_empty.domain = saved_values
         return False
 
     def ac3_is_consistent(self, next_empty, v):
@@ -173,11 +168,6 @@ class CSP:
             if len(neighbor.domain) == 1 and v in neighbor.domain:
                 print("Checking", v, "vs", neighbor.domain)
                 return False
-            # if v in neighbor.domain:
-            #     return False
-            # if neighbor.assigned and v in neighbor.domain:
-            #     print("Checking", v, "vs", neighbor.domain)
-            #     return False
         return True
 
     def select_unassigned(self):
@@ -238,7 +228,6 @@ class CSP:
 
         while self.arcs:
             arc = self.arcs.pop()
-            print(arc)
             result, revised_list = self.revise(arc, revised_list)
 
             if result:
@@ -272,6 +261,8 @@ class CSP:
                 print("REMOVED", x, "FROM", arc.square1.row, arc.square1.col,
                       arc.square1.domain)
                 arc.square1.domain.remove(x)
+                if len(arc.square1.domain) == len:
+                    arc.square1.assigned = True
                 revised_list.append((arc.square1.row, arc.square1.col, x))
                 revised = True
         return revised, revised_list
