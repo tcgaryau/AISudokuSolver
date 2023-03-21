@@ -55,10 +55,11 @@ class CSP:
             for j in range(size):
                 value = puzzle[i][j]
                 if value == 0:
-                    square = Square(i, j, list(
-                        self._get_consistent_values(i, j)))
+                    domain = list(self._get_consistent_values(i, j)) #TODO
+                    square = Square(i, j, domain)
                     board[i][j] = square
-                    self.unassigned.add(square)
+                    if len(domain) > 1:
+                        self.unassigned.add(square)
                 else:
                     board[i][j] = Square(i, j, [value], True)
         self.board = board
@@ -147,6 +148,7 @@ class CSP:
         saved_values = copy.deepcopy(values)
         for v in values:
             if self.ac3_is_consistent(next_empty, v):
+                print("Last")
                 next_empty.domain = [v]
                 result, revised_list = self.ac3(next_empty)
                 if result:
@@ -161,6 +163,11 @@ class CSP:
                 next_empty.domain = saved_values
                 for row, col, value in revised_list:
                     self.board[row][col].domain.append(value)
+            print("Failed")
+        for i in range(self.size_data):
+            for j in range(self.size_data):
+                print(self.board[i][j].domain, end=" ")
+            print("\n")
 
         return False
 
@@ -222,11 +229,6 @@ class CSP:
         :return: a boolean
         """
         revised_list = []
-        # board_copy = copy.deepcopy(self.board)
-
-        # for neighbor in [neighbor for neighbor in square.neighbors if not neighbor.assigned]:
-        # for neighbor in square.neighbors:
-        #     self.arcs.add(Arc(neighbor, square))
 
         while self.arcs:
             arc = self.arcs.pop()
@@ -235,7 +237,6 @@ class CSP:
             if result:
                 print("Revised!")
                 if len(arc.square1.domain) == 0:
-                    print("Fail here?")
                     return False, revised_list
                 # for neighbor in [neighbor for neighbor in arc.square1.neighbors
                 #                  if not neighbor.assigned and neighbor != arc.square2]:
