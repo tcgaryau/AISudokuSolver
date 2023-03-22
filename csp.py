@@ -43,8 +43,7 @@ class CSP:
         self.size_data = len(puzzle_data)
         self.board = None
         self.unassigned = set()
-        self.arcs = set()
-        self.revised = []
+        # self.arcs = set()
 
     def init_board(self):
         """ Initialize a sudoku board as a 2D array of Squares, and the domain of each square. """
@@ -63,16 +62,16 @@ class CSP:
                 board[i][j] = Square(i, j, [value], True)
         self.board = board
 
-    def init_constraints(self):
-        """ Populate the neighbors field of every square on the current board. """
-        board = self.board
-        size = self.size_data
-        for i, j in itertools.product(range(size), range(size)):
-            square = board[i][j]
-            for arc in self._get_arcs(square):
-                if arc.square1.row != arc.square2.row and arc.square1.col != arc.square2.col:
-                    self.arcs.add(arc)
-        print(len(self.arcs))
+    # def init_constraints(self):
+    #     """ Populate the neighbors field of every square on the current board. """
+    #     board = self.board
+    #     size = self.size_data
+    #     for i, j in itertools.product(range(size), range(size)):
+    #         square = board[i][j]
+    #         for arc in self._get_arcs(square):
+    #             if arc.square1.row != arc.square2.row and arc.square1.col != arc.square2.col:
+    #                 self.arcs.add(arc)
+    #     print(len(self.arcs))
 
     def _get_neighbors(self, square):
         return square.neighbors
@@ -157,8 +156,8 @@ class CSP:
                     next_empty.assigned = False
                     self.unassigned.add(next_empty)
                 next_empty.domain = saved_values
-                for row, col, value in revised_list:
-                    self.board[row][col].domain.append(value)
+                for square, value in revised_list:
+                    square.domain.append(value)
         # for i in range(self.size_data):
         #     for j in range(self.size_data):
         #         print(self.board[i][j].domain, end=" ")
@@ -222,13 +221,14 @@ class CSP:
         :return: a boolean
         """
         revised_list = []
+        arcs = set()
 
         for neighbor in square.neighbors:
             if not neighbor.assigned and neighbor != square:
-                self.arcs.add(Arc(neighbor, square))
+                arcs.add(Arc(neighbor, square))
 
-        while self.arcs:
-            arc = self.arcs.pop()
+        while arcs:
+            arc = arcs.pop()
             result, revised_list = self.revise(arc, revised_list)
 
             if result:
@@ -236,7 +236,7 @@ class CSP:
                     return False, revised_list
                 for neighbor in arc.square1.neighbors:
                     if neighbor not in [arc.square2, arc.square1]:
-                        self.arcs.add(Arc(neighbor, arc.square1))
+                        arcs.add(Arc(neighbor, arc.square1))
         return True, revised_list
 
     def revise(self, arc, revised_list):
@@ -250,7 +250,7 @@ class CSP:
             # Xi's domain = {1 2 3}, Xj's domain = {1}
             if len(arc.square2.domain) == 1 and x in [arc.square1.domain, arc.square2.domain]:
                 arc.square1.domain.remove(x)
-                revised_list.append((arc.square1.row, arc.square1.col, x))
+                revised_list.append((arc.square1, x))
                 revised = True
         return revised, revised_list
 
@@ -326,16 +326,19 @@ def test():
     # ]
 
     row_set, col_set, sub_grid_set = test_generate_sets(puzzle)
+    import time
+    now = time.time()
     csp = CSP(puzzle, row_set, col_set, sub_grid_set)
     csp.init_board()
     csp.init_binary_constraints()
-    csp.init_constraints()
+    # csp.init_constraints()
     print("Initial Board")
     for i in csp.board:
         for j in i:
             print(j.row, j.col, j.domain)
 
     csp.solve_csp()
+    print(f"Solved in {time.time() - now}")
     print("\nSolved Board")
     for i in csp.board:
         for j in i:
