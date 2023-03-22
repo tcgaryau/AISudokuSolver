@@ -293,16 +293,24 @@ class CSP:
         return sorted(neighbour_frequency, key=neighbour_frequency.get)
     
     def solve(self):
+        """
+        Initialize the board and constraints, and then solve the puzzle using CSP.
+        :return: if successfully found a solution, bool
+        """
         self.init_board()
         self.init_binary_constraints()
         self.init_constraints()
         return self.solve_csp()
+
     def generate_puzzle_solution(self):
+        """ Generate puzzle data from a Board. """
         for i, j in itertools.product(range(self.size_data), range(self.size_data)):
             self.puzzle_data[i][j] = self.board[i][j].domain[0]
     
     def return_board(self):
-        # print(self.puzzle_data)
+        """
+        :return: puzzle data, a 2D array
+        """
         return self.puzzle_data
 
 
