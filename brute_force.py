@@ -37,7 +37,7 @@ class BruteForce:
 
         if self.num_branch_fail >= self.max_fail:
             return False
-        set_index = (row // self.sg_row_total) * self.sg_col_total + (col // self.sg_col_total)
+        set_index = (row // self.sg_row_total) * self.sg_row_total + (col // self.sg_col_total)
         for num in self.get_available_numbers(row, col, set_index):
 
             # if we've reached the max_depth, reset the counter and continue
@@ -86,8 +86,9 @@ class BruteForce:
         for row in range(self.size_data):
             for col in range(self.size_data):
                 if self.puzzle_data[row][col] == 0:
-                    set_index = (row // self.sg_row_total) * self.sg_col_total + (
+                    set_index = (row // self.sg_row_total) * self.sg_row_total + (
                             col // self.sg_col_total)
+
                     num_options = len(self.get_available_numbers(row, col, set_index))
                     if num_options < min_options:
                         min_options = num_options
