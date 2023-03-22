@@ -37,7 +37,7 @@ class Arc:
 class CSP:
 
     def __init__(self, puzzle_data, row_set, col_set, sub_grid_set):
-        self.puzzle_data = puzzle_data.copy()
+        self.puzzle_data = puzzle_data.deepcopy()
         self.row_set = row_set.copy()
         self.col_set = col_set.copy()
         self.sub_grid_set = sub_grid_set.copy()
@@ -63,18 +63,16 @@ class CSP:
                 board[i][j] = Square(i, j, [value], True)
         self.board = board
 
-
-    def init_constraints(self):
-        """ Populate the neighbors field of every square on the current board. """
-        board = self.board
-        size = self.size_data
-        for i, j in itertools.product(range(size), range(size)):
-            square = board[i][j]
-            for arc in self._get_arcs(square):
-                if arc.square1 != arc.square2:
-                    self.arcs.add(arc)
-        print(len(self.arcs))
-
+    # def init_constraints(self):
+    #     """ Populate the neighbors field of every square on the current board. """
+    #     board = self.board
+    #     size = self.size_data
+    #     for i, j in itertools.product(range(size), range(size)):
+    #         square = board[i][j]
+    #         for arc in self._get_arcs(square):
+    #             if arc.square1 != arc.square2:
+    #                 self.arcs.add(arc)
+    #     print(len(self.arcs))
 
     def _get_neighbors(self, square):
         return square.neighbors
