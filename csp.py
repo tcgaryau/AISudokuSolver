@@ -1,6 +1,7 @@
 import math
 import copy
 import itertools
+import time
 
 
 class Square:
@@ -62,16 +63,18 @@ class CSP:
                 board[i][j] = Square(i, j, [value], True)
         self.board = board
 
-    # def init_constraints(self):
-    #     """ Populate the neighbors field of every square on the current board. """
-    #     board = self.board
-    #     size = self.size_data
-    #     for i, j in itertools.product(range(size), range(size)):
-    #         square = board[i][j]
-    #         for arc in self._get_arcs(square):
-    #             if arc.square1.row != arc.square2.row and arc.square1.col != arc.square2.col:
-    #                 self.arcs.add(arc)
-    #     print(len(self.arcs))
+
+    def init_constraints(self):
+        """ Populate the neighbors field of every square on the current board. """
+        board = self.board
+        size = self.size_data
+        for i, j in itertools.product(range(size), range(size)):
+            square = board[i][j]
+            for arc in self._get_arcs(square):
+                if arc.square1 != arc.square2:
+                    self.arcs.add(arc)
+        print(len(self.arcs))
+
 
     def _get_neighbors(self, square):
         return square.neighbors
@@ -79,7 +82,6 @@ class CSP:
     def _get_arcs(self, square):
         neighbors = self._get_neighbors(square)
         arcs = []
-        # arcs += [Arc(square, neighbor) for neighbor in neighbors]
         arcs += [Arc(neighbor, square) for neighbor in neighbors]
         return arcs
 
@@ -156,6 +158,7 @@ class CSP:
                     next_empty.assigned = False
                     self.unassigned.add(next_empty)
                 next_empty.domain = saved_values
+
                 for square, value in revised_list:
                     square.domain.append(value)
         # for i in range(self.size_data):
@@ -206,7 +209,8 @@ class CSP:
         max_degree = 0
         md = []
         for square in squares:
-            degree = len([neighbor for neighbor in square.neighbors if not neighbor.assigned])
+            degree = len(
+                [neighbor for neighbor in square.neighbors if not neighbor.assigned])
             if degree > max_degree:
                 md = [square]
                 max_degree = degree
@@ -248,7 +252,7 @@ class CSP:
         revised = False
         for x in arc.square1.domain:
             # Xi's domain = {1 2 3}, Xj's domain = {1}
-            if len(arc.square2.domain) == 1 and x in [arc.square1.domain, arc.square2.domain]:
+            if len(arc.square2.domain) == 1 and x in arc.square2.domain:
                 arc.square1.domain.remove(x)
                 revised_list.append((arc.square1, x))
                 revised = True
@@ -303,15 +307,15 @@ def test():
     #     [0, 0, 6, 0, 0, 0, 0, 3, 9]
     # ]
     puzzle = [
-        [4, 0, 1, 0, 0, 0, 6, 0, 0],
-        [0, 9, 0, 3, 0, 6, 0, 5, 0],
-        [0, 0, 0, 0, 9, 0, 0, 0, 0],
-        [0, 2, 0, 0, 0, 0, 0, 0, 9],
-        [0, 0, 0, 1, 0, 9, 0, 0, 0],
-        [7, 0, 0, 0, 0, 0, 0, 0, 6],
-        [0, 0, 0, 0, 2, 0, 0, 0, 0],
-        [0, 8, 0, 5, 0, 7, 0, 6, 0],
-        [1, 0, 3, 0, 0, 0, 7, 0, 2]
+        [4, 0, 0, 0, 0, 0, 8, 0, 5],
+        [0, 3, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 7, 0, 0, 0, 0, 0],
+        [0, 2, 0, 0, 0, 0, 0, 6, 0],
+        [0, 0, 0, 0, 8, 0, 4, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 6, 0, 3, 0, 7, 0],
+        [5, 0, 0, 2, 0, 0, 0, 0, 0],
+        [1, 0, 4, 0, 0, 0, 0, 0, 0],
     ]
     # puzzle = [
     #     [1, 4, 3, 7, 2, 8, 9, 5, 0],
@@ -336,13 +340,15 @@ def test():
     for i in csp.board:
         for j in i:
             print(j.row, j.col, j.domain)
-
-    csp.solve_csp()
-    print(f"Solved in {time.time() - now}")
-    print("\nSolved Board")
-    for i in csp.board:
-        for j in i:
-            print(j.row, j.col, j.domain)
+    start_time = time.time()
+    if final_result := csp.solve_csp():
+        print(f"Solved in {time.time() - start_time} seconds")
+    else:
+        print(f"Failed to solve in {time.time() - start_time} seconds")
+    # print("\nSolved Board")
+    # for i in csp.board:
+    #     for j in i:
+    #         print(j.row, j.col, j.domain)
 
 
 def test_generate_sets(puzzle_data):
@@ -350,14 +356,13 @@ def test_generate_sets(puzzle_data):
     row_set = [set() for _ in range(puzzle_size)]
     col_set = [set() for _ in range(puzzle_size)]
     sub_grid_set = [set() for _ in range(puzzle_size)]
-    for i in range(puzzle_size):
-        for j in range(puzzle_size):
-            num = puzzle_data[i][j]
-            row_set[i].add(num)
-            col_set[j].add(num)
-            sub_grid_set[(i // int(math.sqrt(puzzle_size)))
-                         * int(math.sqrt(puzzle_size))
-                         + (j // int(math.ceil(math.sqrt(puzzle_size))))].add(num)
+    for i, j in itertools.product(range(puzzle_size), range(puzzle_size)):
+        num = puzzle_data[i][j]
+        row_set[i].add(num)
+        col_set[j].add(num)
+        sub_grid_set[(i // int(math.sqrt(puzzle_size)))
+                     * int(math.sqrt(puzzle_size))
+                     + (j // int(math.ceil(math.sqrt(puzzle_size))))].add(num)
 
     return row_set, col_set, sub_grid_set
 
