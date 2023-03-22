@@ -44,7 +44,7 @@ class CSP:
         self.size_data = len(puzzle_data)
         self.board = None
         self.unassigned = set()
-        self.arcs = set()
+        # self.arcs = set()
 
     def init_board(self):
         """ Initialize a sudoku board as a 2D array of Squares, and the domain of each square. """
@@ -63,16 +63,16 @@ class CSP:
                 board[i][j] = Square(i, j, [value], True)
         self.board = board
 
-    def init_constraints(self):
-        """ Generate arc constraints for each square. """
-        board = self.board
-        size = self.size_data
-        for i, j in itertools.product(range(size), range(size)):
-            square = board[i][j]
-            for arc in self._get_arcs(square):
-                if arc.square1 != arc.square2:
-                    self.arcs.add(arc)
-        print(len(self.arcs))
+    # def init_constraints(self):
+    #     """ Generate arc constraints for each square. """
+    #     board = self.board
+    #     size = self.size_data
+    #     for i, j in itertools.product(range(size), range(size)):
+    #         square = board[i][j]
+    #         for arc in self._get_arcs(square):
+    #             if arc.square1 != arc.square2:
+    #                 self.arcs.add(arc)
+    #     print(len(self.arcs))
 
     def _get_neighbors(self, square):
         return square.neighbors
@@ -223,22 +223,22 @@ class CSP:
         :return: a boolean
         """
         revised_list = []
-        # arcs = set()
+        arcs = set()
 
         # for neighbor in square.neighbors:
         #     if not neighbor.assigned and neighbor != square:
         #         self.arcs.add(Arc(neighbor, square))
 
-        while self.arcs:
-            arc = self.arcs.pop()
+        while arcs:
+            arc = arcs.pop()
             result, revised_list = self.revise(arc, revised_list)
 
             if result:
                 if len(arc.square1.domain) == 0:
                     return False, revised_list
                 for neighbor in arc.square1.neighbors:
-                    if neighbor is not [arc.square2, arc.square1]:
-                        self.arcs.add(Arc(neighbor, arc.square1))
+                    if neighbor is not arc.square2:
+                        arcs.add(Arc(neighbor, arc.square1))
         return True, revised_list
 
     def revise(self, arc, revised_list):
@@ -340,11 +340,10 @@ def test():
 
     row_set, col_set, sub_grid_set = test_generate_sets(puzzle)
     import time
-    now = time.time()
     csp = CSP(puzzle, row_set, col_set, sub_grid_set)
     csp.init_board()
     csp.init_binary_constraints()
-    csp.init_constraints()
+    # csp.init_constraints()
     print("Initial Board")
     for i in csp.board:
         for j in i:
