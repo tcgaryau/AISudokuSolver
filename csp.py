@@ -1,6 +1,7 @@
 import math
 import copy
 import itertools
+import time
 
 
 class Square:
@@ -70,7 +71,7 @@ class CSP:
         for i, j in itertools.product(range(size), range(size)):
             square = board[i][j]
             for arc in self._get_arcs(square):
-                if arc.square1.row != arc.square2.row and arc.square1.col != arc.square2.col:
+                if arc.square1 != arc.square2:
                     self.arcs.add(arc)
         print(len(self.arcs))
 
@@ -80,7 +81,6 @@ class CSP:
     def _get_arcs(self, square):
         neighbors = self._get_neighbors(square)
         arcs = []
-        # arcs += [Arc(square, neighbor) for neighbor in neighbors]
         arcs += [Arc(neighbor, square) for neighbor in neighbors]
         return arcs
 
@@ -159,10 +159,11 @@ class CSP:
                 next_empty.domain = saved_values
                 for row, col, value in revised_list:
                     self.board[row][col].domain.append(value)
-        # for i in range(self.size_data):
-        #     for j in range(self.size_data):
-        #         print(self.board[i][j].domain, end=" ")
-        #     print("\n")
+                # [self.board[row][col].domain.append(value) for row, col, value in revised_list]
+                # for i in range(self.size_data):
+                #     for j in range(self.size_data):
+                #         print(self.board[i][j].domain, end=" ")
+                #     print("\n")
 
         return False
 
@@ -223,19 +224,38 @@ class CSP:
         """
         revised_list = []
 
-        for neighbor in square.neighbors:
-            if not neighbor.assigned and neighbor != square:
-                self.arcs.add(Arc(neighbor, square))
+        # while self.arcs:
+        #     # print("We popping")
+        #     # for set_arc in self.arcs:
+        #     #     if set_arc.square2 is square:
+        #     #         arc = set_arc
+        #     #         self.arcs.remove(arc)
+        #     #         break
+        #
+        #     arc = self.arcs.pop()
+        #     result, revised_list = self.revise(arc, revised_list)
+        #     if result:
+        #         if len(arc.square1.domain) == 0:
+        #             return False, revised_list
+        #         for neighbor in arc.square1.neighbors:
+        #             if neighbor is not arc.square2:
+        #                 self.arcs.add(Arc(neighbor, arc.square1))
 
         while self.arcs:
+            # print("We popping")
+            # for set_arc in self.arcs:
+            #     if set_arc.square2 is square:
+            #         arc = set_arc
+            #         self.arcs.remove(arc)
+            #         break
+
             arc = self.arcs.pop()
             result, revised_list = self.revise(arc, revised_list)
-
             if result:
                 if len(arc.square1.domain) == 0:
                     return False, revised_list
                 for neighbor in arc.square1.neighbors:
-                    if neighbor not in [arc.square2, arc.square1]:
+                    if neighbor is not arc.square2:
                         self.arcs.add(Arc(neighbor, arc.square1))
         return True, revised_list
 
@@ -247,27 +267,17 @@ class CSP:
         """
         revised = False
         for x in arc.square1.domain:
+            # print("Square 1 domain: ", arc.square1.domain, "S quare2 domain: ", arc.square2.domain)
             # Xi's domain = {1 2 3}, Xj's domain = {1}
-            if len(arc.square2.domain) == 1 and x in [arc.square1.domain, arc.square2.domain]:
+            if len(arc.square2.domain) == 1 and x in arc.square2.domain:
+                # if len(arc.square2.domain) == 1 and x in arc.square2.domain and x in arc.square1.domain:
+                print("Removed: ", x, "from square: ", arc.square1.row, arc.square1.col)
                 arc.square1.domain.remove(x)
                 revised_list.append((arc.square1.row, arc.square1.col, x))
                 revised = True
         return revised, revised_list
 
-    def is_consistent(self, value, square2):
-        """
-        Check if a value is consistent with a square.
-        :param value: a value
-        :param square2: a Square
-        :return: a boolean
-        """
-        return value not in square2.domain
 
-        # for domain_value in square2.domain:
-        #     if domain_value != value:
-        #         return False
-        #
-        # return True
 
     def find_least_constraining_value(self, square):
         """
@@ -283,10 +293,6 @@ class CSP:
                 if val in neighbour.domain:
                     neighbour_frequency[val] += 1
 
-        # min_val = None
-        # for key, value in neighbour_frequency.items():
-        #     if min_val is None or value < neighbour_frequency[min_val]:
-        #         min_val = key
         return sorted(neighbour_frequency, key=neighbour_frequency.get)
 
 
@@ -302,16 +308,27 @@ def test():
     #     [0, 0, 9, 0, 0, 0, 0, 8, 0],
     #     [0, 0, 6, 0, 0, 0, 0, 3, 9]
     # ]
+    # puzzle = [
+    #     [4, 0, 1, 0, 0, 0, 6, 0, 0],
+    #     [0, 9, 0, 3, 0, 6, 0, 5, 0],
+    #     [0, 0, 0, 0, 9, 0, 0, 0, 0],
+    #     [0, 2, 0, 0, 0, 0, 0, 0, 9],
+    #     [0, 0, 0, 1, 0, 9, 0, 0, 0],
+    #     [7, 0, 0, 0, 0, 0, 0, 0, 6],
+    #     [0, 0, 0, 0, 2, 0, 0, 0, 0],
+    #     [0, 8, 0, 5, 0, 7, 0, 6, 0],
+    #     [1, 0, 3, 0, 0, 0, 7, 0, 2]
+    # ]
     puzzle = [
-        [4, 0, 1, 0, 0, 0, 6, 0, 0],
-        [0, 9, 0, 3, 0, 6, 0, 5, 0],
-        [0, 0, 0, 0, 9, 0, 0, 0, 0],
-        [0, 2, 0, 0, 0, 0, 0, 0, 9],
-        [0, 0, 0, 1, 0, 9, 0, 0, 0],
-        [7, 0, 0, 0, 0, 0, 0, 0, 6],
-        [0, 0, 0, 0, 2, 0, 0, 0, 0],
-        [0, 8, 0, 5, 0, 7, 0, 6, 0],
-        [1, 0, 3, 0, 0, 0, 7, 0, 2]
+        [4, 0, 0, 0, 0, 0, 8, 0, 5],
+        [0, 3, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 7, 0, 0, 0, 0, 0],
+        [0, 2, 0, 0, 0, 0, 0, 6, 0],
+        [0, 0, 0, 0, 8, 0, 4, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 6, 0, 3, 0, 7, 0],
+        [5, 0, 0, 2, 0, 0, 0, 0, 0],
+        [1, 0, 4, 0, 0, 0, 0, 0, 0],
     ]
     # puzzle = [
     #     [1, 4, 3, 7, 2, 8, 9, 5, 0],
@@ -334,12 +351,15 @@ def test():
     for i in csp.board:
         for j in i:
             print(j.row, j.col, j.domain)
-
-    csp.solve_csp()
-    print("\nSolved Board")
-    for i in csp.board:
-        for j in i:
-            print(j.row, j.col, j.domain)
+    start_time = time.time()
+    if final_result := csp.solve_csp():
+        print(f"Solved in {time.time() - start_time} seconds")
+    else:
+        print(f"Failed to solve in {time.time() - start_time} seconds")
+    # print("\nSolved Board")
+    # for i in csp.board:
+    #     for j in i:
+    #         print(j.row, j.col, j.domain)
 
 
 def test_generate_sets(puzzle_data):
@@ -347,14 +367,13 @@ def test_generate_sets(puzzle_data):
     row_set = [set() for _ in range(puzzle_size)]
     col_set = [set() for _ in range(puzzle_size)]
     sub_grid_set = [set() for _ in range(puzzle_size)]
-    for i in range(puzzle_size):
-        for j in range(puzzle_size):
-            num = puzzle_data[i][j]
-            row_set[i].add(num)
-            col_set[j].add(num)
-            sub_grid_set[(i // int(math.sqrt(puzzle_size)))
-                         * int(math.sqrt(puzzle_size))
-                         + (j // int(math.ceil(math.sqrt(puzzle_size))))].add(num)
+    for i, j in itertools.product(range(puzzle_size), range(puzzle_size)):
+        num = puzzle_data[i][j]
+        row_set[i].add(num)
+        col_set[j].add(num)
+        sub_grid_set[(i // int(math.sqrt(puzzle_size)))
+                     * int(math.sqrt(puzzle_size))
+                     + (j // int(math.ceil(math.sqrt(puzzle_size))))].add(num)
 
     return row_set, col_set, sub_grid_set
 
