@@ -1,6 +1,7 @@
 import math
 import copy
 import itertools
+import time
 
 
 class Square:
@@ -95,7 +96,7 @@ class CSP:
         sg_row_total = int(math.sqrt(size))
         sg_col_total = int(math.ceil(math.sqrt(size)))
         set_index = (row // sg_row_total) * \
-                    sg_col_total + (col // sg_col_total)
+            sg_col_total + (col // sg_col_total)
         return set(range(1, size + 1)) - set(
             list(self.row_set[row])
             + list(self.col_set[col])
@@ -147,6 +148,7 @@ class CSP:
         for v in values:
             if self.ac3_is_consistent(next_empty, v):
                 next_empty.domain = [v]
+                # result is always true currently - need to fix ac3 or revise method
                 result, revised_list = self.ac3(next_empty)
                 if result:
                     next_empty.assigned = True
@@ -157,7 +159,7 @@ class CSP:
                     next_empty.assigned = False
                     self.unassigned.add(next_empty)
                 next_empty.domain = saved_values
-                for row, col, value in revised_list:
+                for row, col, value in revised_list:  # revised_list is always empty currently
                     self.board[row][col].domain.append(value)
         # for i in range(self.size_data):
         #     for j in range(self.size_data):
@@ -207,7 +209,8 @@ class CSP:
         max_degree = 0
         md = []
         for square in squares:
-            degree = len([neighbor for neighbor in square.neighbors if not neighbor.assigned])
+            degree = len(
+                [neighbor for neighbor in square.neighbors if not neighbor.assigned])
             if degree > max_degree:
                 md = [square]
                 max_degree = degree
@@ -335,7 +338,10 @@ def test():
         for j in i:
             print(j.row, j.col, j.domain)
 
-    csp.solve_csp()
+    start_time = time.time()
+    result = csp.solve_csp()
+    if result:
+        print("Solved in {} seconds".format(time.time() - start_time))
     print("\nSolved Board")
     for i in csp.board:
         for j in i:
