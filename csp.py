@@ -38,9 +38,9 @@ class CSP:
 
     def __init__(self, puzzle_data, row_set, col_set, sub_grid_set):
         self.puzzle_data = puzzle_data.deepcopy()
-        self.row_set = row_set.copy()
-        self.col_set = col_set.copy()
-        self.sub_grid_set = sub_grid_set.copy()
+        self.row_set = row_set.deepcopy()
+        self.col_set = col_set.deepcopy()
+        self.sub_grid_set = sub_grid_set.deepcopy()
         self.size_data = len(puzzle_data)
         self.board = None
         self.unassigned = set()
