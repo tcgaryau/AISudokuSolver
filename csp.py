@@ -51,17 +51,16 @@ class CSP:
         size = self.size_data
         puzzle = self.puzzle_data
         board = [[None for _ in range(size)] for _ in range(size)]
-        for i in range(size):
-            for j in range(size):
-                value = puzzle[i][j]
-                if value == 0:
-                    domain = list(self._get_consistent_values(i, j)) #TODO
-                    square = Square(i, j, domain)
-                    board[i][j] = square
-                    if len(domain) > 1:
-                        self.unassigned.add(square)
-                else:
-                    board[i][j] = Square(i, j, [value], True)
+        for i, j in itertools.product(range(size), range(size)):
+            value = puzzle[i][j]
+            if value == 0:
+                domain = list(self._get_consistent_values(i, j))
+                square = Square(i, j, domain)
+                board[i][j] = square
+                if len(domain) > 1:
+                    self.unassigned.add(square)
+            else:
+                board[i][j] = Square(i, j, [value], True)
         self.board = board
 
     def init_constraints(self):
@@ -96,7 +95,7 @@ class CSP:
         sg_row_total = int(math.sqrt(size))
         sg_col_total = int(math.ceil(math.sqrt(size)))
         set_index = (row // sg_row_total) * \
-                        sg_col_total + (col // sg_col_total)
+                    sg_col_total + (col // sg_col_total)
         return set(range(1, size + 1)) - set(
             list(self.row_set[row])
             + list(self.col_set[col])
@@ -110,32 +109,30 @@ class CSP:
         sg_row_total = int(math.sqrt(size))
         sg_col_total = int(math.ceil(math.sqrt(size)))
 
-        for i in range(size):
-            for j in range(size):
-                curr_square = board[i][j]
-        # for curr_square in self.unassigned:
-                row = curr_square.row
-                col = curr_square.col
-                neighbors = set()
+        for i, j in itertools.product(range(size), range(size)):
+            curr_square = board[i][j]
+            # for curr_square in self.unassigned:
+            row = curr_square.row
+            col = curr_square.col
+            neighbors = set()
 
-                for n in range(size):
-                    square = board[row][n]
-                    if n != col:
-                        neighbors.add(square)
+            for n in range(size):
+                square = board[row][n]
+                if n != col:
+                    neighbors.add(square)
 
-                for m in range(size):
-                    square = board[m][col]
-                    if m != row:
-                        neighbors.add(square)
+            for m in range(size):
+                square = board[m][col]
+                if m != row:
+                    neighbors.add(square)
 
-                shift_row = row // sg_row_total * sg_row_total
-                shift_col = col // sg_col_total * sg_col_total
-                for m in range(sg_row_total):
-                    for n in range(sg_col_total):
-                        square = board[m + shift_row][n + shift_col]
-                        if m != row and n != col:
-                            neighbors.add(square)
-                curr_square.neighbors = neighbors
+            shift_row = row // sg_row_total * sg_row_total
+            shift_col = col // sg_col_total * sg_col_total
+            for m, n in itertools.product(range(sg_row_total), range(sg_col_total)):
+                square = board[m + shift_row][n + shift_col]
+                if m != row and n != col:
+                    neighbors.add(square)
+            curr_square.neighbors = neighbors
 
     def solve_csp(self):
         """ CSP algorithms. """
@@ -145,22 +142,16 @@ class CSP:
             return True
 
         next_empty = self.select_unassigned()
-        print("NEXT EMPTY", next_empty.row, next_empty.col, next_empty.domain)
-        print("LEN", len(self.unassigned), "Squares", [(s.row, s.col) for s in self.unassigned])
         values = self.find_least_constraining_value(next_empty)
         saved_values = copy.deepcopy(values)
         for v in values:
-            print("before consistent check", v)
             if self.ac3_is_consistent(next_empty, v):
-                print("Last", v)
                 next_empty.domain = [v]
                 result, revised_list = self.ac3(next_empty)
                 if result:
-
                     next_empty.assigned = True
                     self.unassigned.remove(next_empty)
                     if self.solve_csp():
-                        print("Success")
                         return True
 
                     next_empty.assigned = False
@@ -168,20 +159,18 @@ class CSP:
                 next_empty.domain = saved_values
                 for row, col, value in revised_list:
                     self.board[row][col].domain.append(value)
-        for i in range(self.size_data):
-            for j in range(self.size_data):
-                print(self.board[i][j].domain, end=" ")
-            print("\n")
+        # for i in range(self.size_data):
+        #     for j in range(self.size_data):
+        #         print(self.board[i][j].domain, end=" ")
+        #     print("\n")
 
         return False
 
     def ac3_is_consistent(self, next_empty, v):
-        # print("Current value", v, "FOR SQUARE", next_empty.row, next_empty.col, next_empty.domain)
-        for neighbor in next_empty.neighbors:
-            if len(neighbor.domain) == 1 and v in neighbor.domain:
-                print("Checking", v, "vs", neighbor.domain)
-                return False
-        return True
+        return not any(
+            len(neighbor.domain) == 1 and v in neighbor.domain
+            for neighbor in next_empty.neighbors
+        )
 
     def select_unassigned(self):
         """
@@ -245,8 +234,6 @@ class CSP:
             if result:
                 if len(arc.square1.domain) == 0:
                     return False, revised_list
-                # for neighbor in [neighbor for neighbor in arc.square1.neighbors
-                #                  if not neighbor.assigned and neighbor != arc.square2]:
                 for neighbor in arc.square1.neighbors:
                     if neighbor not in [arc.square2, arc.square1]:
                         self.arcs.add(Arc(neighbor, arc.square1))
@@ -260,32 +247,11 @@ class CSP:
         """
         revised = False
         for x in arc.square1.domain:
-            print("X", x, "Square1", arc.square1.row, arc.square1.col, "Square2", arc.square2.row, arc.square2.col)
             # Xi's domain = {1 2 3}, Xj's domain = {1}
-            if len(arc.square2.domain) == 1 and x in arc.square2.domain:
-                print("REMOVED", x, "FROM", arc.square1.row, arc.square1.col,
-                      arc.square1.domain)
+            if len(arc.square2.domain) == 1 and x in [arc.square1.domain, arc.square2.domain]:
                 arc.square1.domain.remove(x)
                 revised_list.append((arc.square1.row, arc.square1.col, x))
                 revised = True
-
-                # arc.square1.domain.remove(x)
-                # if len(arc.square1.domain) == 1:
-                #     arc.square1.assigned = True
-                # revised_list.append((arc.square1.row, arc.square1.col, x))
-                # revised = True
-
-
-            # if any(x != y for y in arc.square2.domain):
-            #     revised = False
-            # else:
-            #     print("REMOVED", x, "FROM", arc.square1.row, arc.square1.col,
-            #           arc.square1.domain)
-            #     arc.square1.domain.remove(x)
-            #     if len(arc.square1.domain) == 1:
-            #         arc.square1.assigned = True
-            #     revised_list.append((arc.square1.row, arc.square1.col, x))
-            #     revised = True
         return revised, revised_list
 
     def is_consistent(self, value, square2):
@@ -295,8 +261,6 @@ class CSP:
         :param square2: a Square
         :return: a boolean
         """
-        # print("CHECKING consistency", value, "vs", square2.domain)
-
         return value not in square2.domain
 
         # for domain_value in square2.domain:
@@ -304,9 +268,6 @@ class CSP:
         #         return False
         #
         # return True
-
-    # current {1,2,3}
-    # neighbour {3,4,5}
 
     def find_least_constraining_value(self, square):
         """
@@ -330,28 +291,28 @@ class CSP:
 
 
 def test():
-    puzzle = [
-        [0, 0, 0, 5, 0, 3, 0, 0, 2],
-        [0, 0, 1, 0, 6, 8, 0, 0, 0],
-        [3, 6, 2, 7, 4, 9, 5, 1, 8],
-        [1, 4, 3, 6, 2, 7, 8, 9, 5],
-        [9, 2, 5, 8, 3, 4, 7, 6, 1],
-        [6, 8, 7, 9, 5, 1, 3, 2, 4],
-        [2, 1, 8, 3, 9, 6, 4, 5, 7],
-        [4, 3, 9, 1, 7, 5, 0, 8, 0],
-        [0, 0, 6, 0, 0, 0, 0, 3, 9]
-    ]
     # puzzle = [
-    #     [4, 0, 1, 0, 0, 0, 6, 0, 4],
-    #     [0, 9, 0, 3, 0, 6, 0, 5, 0],
-    #     [0, 0, 0, 0, 9, 0, 0, 0, 0],
-    #     [4, 0, 0, 0, 0, 0, 0, 0, 9],
-    #     [0, 0, 0, 1, 0, 9, 0, 0, 0],
-    #     [7, 0, 0, 0, 0, 0, 0, 0, 6],
-    #     [0, 0, 0, 0, 2, 0, 0, 0, 0],
-    #     [0, 8, 0, 5, 0, 7, 0, 6, 0],
-    #     [1, 0, 3, 0, 0, 0, 7, 0, 2]
+    #     [0, 0, 0, 5, 0, 3, 0, 0, 2],
+    #     [0, 0, 1, 0, 6, 8, 0, 4, 3],
+    #     [0, 0, 0, 0, 4, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 2, 0, 0, 0, 5],
+    #     [9, 0, 0, 0, 0, 0, 7, 0, 1],
+    #     [0, 8, 0, 9, 0, 0, 0, 0, 0],
+    #     [0, 1, 0, 0, 0, 0, 0, 5, 0],
+    #     [0, 0, 9, 0, 0, 0, 0, 8, 0],
+    #     [0, 0, 6, 0, 0, 0, 0, 3, 9]
     # ]
+    puzzle = [
+        [4, 0, 1, 0, 0, 0, 6, 0, 0],
+        [0, 9, 0, 3, 0, 6, 0, 5, 0],
+        [0, 0, 0, 0, 9, 0, 0, 0, 0],
+        [0, 2, 0, 0, 0, 0, 0, 0, 9],
+        [0, 0, 0, 1, 0, 9, 0, 0, 0],
+        [7, 0, 0, 0, 0, 0, 0, 0, 6],
+        [0, 0, 0, 0, 2, 0, 0, 0, 0],
+        [0, 8, 0, 5, 0, 7, 0, 6, 0],
+        [1, 0, 3, 0, 0, 0, 7, 0, 2]
+    ]
     # puzzle = [
     #     [1, 4, 3, 7, 2, 8, 9, 5, 0],
     #     [9, 0, 0, 3, 0, 5, 0, 0, 1],
@@ -375,8 +336,7 @@ def test():
             print(j.row, j.col, j.domain)
 
     csp.solve_csp()
-    print()
-    print("Solved Board")
+    print("\nSolved Board")
     for i in csp.board:
         for j in i:
             print(j.row, j.col, j.domain)
