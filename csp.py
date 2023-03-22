@@ -159,11 +159,7 @@ class CSP:
                 next_empty.domain = saved_values
                 for row, col, value in revised_list:
                     self.board[row][col].domain.append(value)
-                # [self.board[row][col].domain.append(value) for row, col, value in revised_list]
-                # for i in range(self.size_data):
-                #     for j in range(self.size_data):
-                #         print(self.board[i][j].domain, end=" ")
-                #     print("\n")
+
 
         return False
 
@@ -208,7 +204,8 @@ class CSP:
         max_degree = 0
         md = []
         for square in squares:
-            degree = len([neighbor for neighbor in square.neighbors if not neighbor.assigned])
+            degree = len(
+                [neighbor for neighbor in square.neighbors if not neighbor.assigned])
             if degree > max_degree:
                 md = [square]
                 max_degree = degree
@@ -224,38 +221,19 @@ class CSP:
         """
         revised_list = []
 
-        # while self.arcs:
-        #     # print("We popping")
-        #     # for set_arc in self.arcs:
-        #     #     if set_arc.square2 is square:
-        #     #         arc = set_arc
-        #     #         self.arcs.remove(arc)
-        #     #         break
-        #
-        #     arc = self.arcs.pop()
-        #     result, revised_list = self.revise(arc, revised_list)
-        #     if result:
-        #         if len(arc.square1.domain) == 0:
-        #             return False, revised_list
-        #         for neighbor in arc.square1.neighbors:
-        #             if neighbor is not arc.square2:
-        #                 self.arcs.add(Arc(neighbor, arc.square1))
+        for neighbor in square.neighbors:
+            if not neighbor.assigned and neighbor != square:
+                self.arcs.add(Arc(neighbor, square))
 
         while self.arcs:
-            # print("We popping")
-            # for set_arc in self.arcs:
-            #     if set_arc.square2 is square:
-            #         arc = set_arc
-            #         self.arcs.remove(arc)
-            #         break
-
             arc = self.arcs.pop()
             result, revised_list = self.revise(arc, revised_list)
+
             if result:
                 if len(arc.square1.domain) == 0:
                     return False, revised_list
                 for neighbor in arc.square1.neighbors:
-                    if neighbor is not arc.square2:
+                    if neighbor not in [arc.square2, arc.square1]:
                         self.arcs.add(Arc(neighbor, arc.square1))
         return True, revised_list
 
@@ -267,17 +245,27 @@ class CSP:
         """
         revised = False
         for x in arc.square1.domain:
-            # print("Square 1 domain: ", arc.square1.domain, "S quare2 domain: ", arc.square2.domain)
             # Xi's domain = {1 2 3}, Xj's domain = {1}
-            if len(arc.square2.domain) == 1 and x in arc.square2.domain:
-                # if len(arc.square2.domain) == 1 and x in arc.square2.domain and x in arc.square1.domain:
-                print("Removed: ", x, "from square: ", arc.square1.row, arc.square1.col)
+            if len(arc.square2.domain) == 1 and x in [arc.square1.domain, arc.square2.domain]:
                 arc.square1.domain.remove(x)
                 revised_list.append((arc.square1.row, arc.square1.col, x))
                 revised = True
         return revised, revised_list
 
+    def is_consistent(self, value, square2):
+        """
+        Check if a value is consistent with a square.
+        :param value: a value
+        :param square2: a Square
+        :return: a boolean
+        """
+        return value not in square2.domain
 
+        # for domain_value in square2.domain:
+        #     if domain_value != value:
+        #         return False
+        #
+        # return True
 
     def find_least_constraining_value(self, square):
         """
@@ -293,6 +281,10 @@ class CSP:
                 if val in neighbour.domain:
                     neighbour_frequency[val] += 1
 
+        # min_val = None
+        # for key, value in neighbour_frequency.items():
+        #     if min_val is None or value < neighbour_frequency[min_val]:
+        #         min_val = key
         return sorted(neighbour_frequency, key=neighbour_frequency.get)
 
 
@@ -307,17 +299,6 @@ def test():
     #     [0, 1, 0, 0, 0, 0, 0, 5, 0],
     #     [0, 0, 9, 0, 0, 0, 0, 8, 0],
     #     [0, 0, 6, 0, 0, 0, 0, 3, 9]
-    # ]
-    # puzzle = [
-    #     [4, 0, 1, 0, 0, 0, 6, 0, 0],
-    #     [0, 9, 0, 3, 0, 6, 0, 5, 0],
-    #     [0, 0, 0, 0, 9, 0, 0, 0, 0],
-    #     [0, 2, 0, 0, 0, 0, 0, 0, 9],
-    #     [0, 0, 0, 1, 0, 9, 0, 0, 0],
-    #     [7, 0, 0, 0, 0, 0, 0, 0, 6],
-    #     [0, 0, 0, 0, 2, 0, 0, 0, 0],
-    #     [0, 8, 0, 5, 0, 7, 0, 6, 0],
-    #     [1, 0, 3, 0, 0, 0, 7, 0, 2]
     # ]
     puzzle = [
         [4, 0, 0, 0, 0, 0, 8, 0, 5],
