@@ -138,6 +138,7 @@ class CSP:
 
         # Return true if all squares have been assigned a value
         if len(self.unassigned) == 0:
+            self.generate_puzzle_solution()
             return True
 
         next_empty = self.select_unassigned()
@@ -290,6 +291,19 @@ class CSP:
         #     if min_val is None or value < neighbour_frequency[min_val]:
         #         min_val = key
         return sorted(neighbour_frequency, key=neighbour_frequency.get)
+    
+    def solve(self):
+        self.init_board()
+        self.init_binary_constraints()
+        self.init_constraints()
+        return self.solve_csp()
+    def generate_puzzle_solution(self):
+        for i, j in itertools.product(range(self.size_data), range(self.size_data)):
+            self.puzzle_data[i][j] = self.board[i][j].domain[0]
+    
+    def return_board(self):
+        # print(self.puzzle_data)
+        return self.puzzle_data
 
 
 def test():

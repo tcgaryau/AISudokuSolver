@@ -1,13 +1,14 @@
 import math
+import copy
 
 
 class BruteForce:
 
     def __init__(self, puzzle_data, size_data, row_set, col_set, sub_grid_set):
-        self.puzzle_data = puzzle_data
-        self.row_set = row_set
-        self.col_set = col_set
-        self.sub_grid_set = sub_grid_set
+        self.puzzle_data = copy.deepcopy(puzzle_data)
+        self.row_set = copy.deepcopy(row_set)
+        self.col_set = copy.deepcopy(col_set)
+        self.sub_grid_set = copy.deepcopy(sub_grid_set)
         self.sg_row_total = 0
         self.sg_col_total = 0
         self.size_data = size_data
@@ -16,7 +17,7 @@ class BruteForce:
         self.num_branch_fail = 0
         self.max_fail = size_data * size_data * 1000
 
-    def solve_brute_force(self, is_first=True) -> bool:
+    def solve(self, is_first=True) -> bool:
         """
         Brute force depth - first searching algorithm.
         In each node, find a valid number to fill the most top-left empty square.
@@ -51,7 +52,7 @@ class BruteForce:
             self.col_set[col].add(num)
             self.sub_grid_set[set_index].add(num)
 
-            if self.solve_brute_force(False):
+            if self.solve(False):
                 return True
 
             self.row_set[row].remove(num)

@@ -5,6 +5,7 @@ from tkinter import filedialog
 import os
 import math
 from brute_force import BruteForce
+from csp import CSP
 
 cells = {}
 btnFont = ("Californian FB", 15)
@@ -26,6 +27,9 @@ class SudokuBoard:
 
         self.clicked = None
 
+        self.puzzle_solution_bf = None
+        self.puzzle_solution_csp = None
+
     def clear(self):
         for widgets in self.main_frame.winfo_children():
             widgets.destroy()
@@ -34,7 +38,7 @@ class SudokuBoard:
     def change_colour(self, colour):
         return "#ffffd0" if colour == "#D0ffff" else "#D0ffff"
 
-    def draw_sub_grid(self, row_num, col_num, sub_row_num, sub_col_num, bgcolour, parent_frame):
+    def draw_sub_grid(self, row_num, col_num, sub_row_num, sub_col_num, bgcolour, parent_frame, data):
         frame = Frame(parent_frame)
 
         # segment:use a canvas inside subframe
@@ -54,9 +58,9 @@ class SudokuBoard:
                 y = i * sqrH
                 canvas.create_rectangle(
                     x, y, x + sqrW, y + sqrH, outline='black')
-                if self.puzzle_data:
-                    entry = self.puzzle_data[i + row_num][j + col_num] if \
-                        self.puzzle_data[i + row_num][
+                if data:
+                    entry = data[i + row_num][j + col_num] if \
+                        data[i + row_num][
                             j + col_num] != 0 else ""
                     canvas.create_text(x + sqrW / 2, y + sqrH / 2,
                                        text=f"{entry}",
@@ -75,7 +79,7 @@ class SudokuBoard:
         #                    sticky="nsew", ipady=2)
         frame.grid(row=row_num + 1, column=col_num + 1)
 
-    def draw_whole_grid(self, row, col, sub_row_num, sub_col_num):
+    def draw_whole_grid(self, row, col, sub_row_num, sub_col_num, data):
         self.clear()
         colour = "#D0ffff"
 
@@ -94,7 +98,7 @@ class SudokuBoard:
 
         for row_num in range(0, row, sub_row_num):
             for col_num in range(0, col, sub_col_num):
-                self.draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, colour, inner_frame)
+                self.draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, colour, inner_frame, data)
                 colour = self.change_colour(colour)
             if sub_row_num % 2 == 0:
                 colour = self.change_colour(colour)
@@ -104,23 +108,23 @@ class SudokuBoard:
         match self.clicked.get():
             case "9x9":
                 self.generate_board(9)
-                self.draw_whole_grid(9, 9, 3, 3)
+                self.draw_whole_grid(9, 9, 3, 3, self.puzzle_data)
             case "12x12":
                 self.generate_board(12)
-                self.draw_whole_grid(12, 12, 3, 4)
+                self.draw_whole_grid(12, 12, 3, 4, self.puzzle_data)
             case "16x16":
                 self.generate_board(16)
-                self.draw_whole_grid(16, 16, 4, 4)
+                self.draw_whole_grid(16, 16, 4, 4, self.puzzle_data)
             case "25x25":
                 self.generate_board(25)
-                self.draw_whole_grid(25, 25, 5, 5)
+                self.draw_whole_grid(25, 25, 5, 5, self.puzzle_data)
             case "100x100":
                 self.generate_board(100)
                 self.bottom_frame.children['!button2'].configure(state="disabled")
-                self.draw_whole_grid(100, 100, 10, 10)
+                self.draw_whole_grid(100, 100, 10, 10, self.puzzle_data)
             case "Select Options":
                 self.draw_whole_grid(self.size_data, self.size_data, int(
-                    math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)))
+                    math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)), self.puzzle_data)
 
     def browse_files(self):
         label_file_explorer = Label(self.main_frame,
@@ -229,28 +233,31 @@ class SudokuBoard:
 
     def on_click_solve_brute_force(self):
         self.clear()
-        brute_force = BruteForce(self.puzzle_data, self.size_data, self.row_set, self.col_set,
-                                 self.sub_grid_set)
+        brute_force = BruteForce(self.puzzle_data, self.size_data, self.row_set, self.col_set, self.sub_grid_set)
+        self.solve_puzzle(brute_force, 'bf')
+
+    def on_click_solve_csp(self):
+        self.clear()
+        csp = CSP(self.puzzle_data, self.row_set, self.col_set, self.sub_grid_set)
+        self.solve_puzzle(csp, 'csp')
+
+    def solve_puzzle(self, solver, mode):
         start = time.time()
         max_time = start + 300
+        solution = self.puzzle_solution_bf if mode == 'bf' else self.puzzle_solution_csp
         while time.time() < max_time:
-            if brute_force.solve_brute_force():
-                self.puzzle_data = brute_force.return_board()
-                print(f"Brute Force took {time.time() - start} s")
+            if solver.solve():
+                solution = solver.return_board()
                 self.draw_whole_grid(self.size_data, self.size_data, int(
-                    math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)))
+                    math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)), solution)
                 break
-            elif brute_force.current_limit < brute_force.max_fail:
+            elif mode == 'bf' and brute_force.current_limit < brute_force.max_fail:
                 self.display_message("This is an invalid board that has no solution.")
                 break
-            if brute_force.max_fail < brute_force.current_limit:
+            if mode == 'bf' and brute_force.max_fail < brute_force.current_limit:
                 brute_force.increase_max_depth()
         else:
             self.display_message("Timer ran out. No solution found.")
-
-    def solve_csp(self):
-        if len(cells) == 0:
-            return
 
     def main(self):
         root = Tk()
@@ -280,7 +287,7 @@ class SudokuBoard:
         btn_solve_heuristic.grid(row=0, column=4)
 
         btn_solve_csp = Button(self.bottom_frame, text="Solve (CSP)", font=btnFont,
-                               command=self.solve_csp, width=15, height=2)
+                               command=self.on_click_solve_csp, width=15, height=2)
         btn_solve_csp.grid(row=0, column=8)
 
         btn_clear = Button(self.bottom_frame, text="Clear", font=btnFont, command=self.clear, width=15, height=2)
