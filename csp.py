@@ -129,7 +129,7 @@ class CSP:
             shift_col = col // sg_col_total * sg_col_total
             for m, n in itertools.product(range(sg_row_total), range(sg_col_total)):
                 square = board[m + shift_row][n + shift_col]
-                if m != row and n != col:
+                if m + shift_row != row and n + shift_col != col:
                     neighbors.add(square)
             curr_square.neighbors = neighbors
 
