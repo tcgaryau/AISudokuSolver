@@ -4,6 +4,8 @@ from tkinter import *
 from tkinter import filedialog
 import os
 import math
+from enum import Enum
+
 from brute_force import BruteForce
 from csp import CSP
 
@@ -30,8 +32,8 @@ class SudokuBoard:
         self.clicked = None
         self.brute_force_timer = None
 
-        self.puzzle_solution_bf = None
-        self.puzzle_solution_csp = None
+        self.puzzle_solution_1 = None
+        self.puzzle_solution_2 = None
 
     def clear(self):
         for widgets in self.main_frame.winfo_children():
@@ -47,76 +49,109 @@ class SudokuBoard:
     def change_colour(self, colour):
         return "#ffffd0" if colour == "#D0ffff" else "#D0ffff"
 
-    def draw_sub_grid(self, row_num, col_num, sub_row_num, sub_col_num, bgcolour, parent_frame, data):
-        frame = Frame(parent_frame)
+    def draw_sub_grid(self, row_num, col_num, sub_row_num, sub_col_num, bgcolour, draw_list):
+        for item in draw_list:
+            frame = Frame(item[0])
+            data = item[1][0]
+            print(data)
 
-        # segment:use a canvas inside subframe
-        # each square is at least of dimension 20
-        sqr_w = max(self.main_height // sub_col_num / sub_row_num, 20)
-        width = int(sqr_w * sub_col_num)
-        height = int(sqr_w * sub_row_num)
-        canvas = Canvas(frame, height=height, width=width,
-                        bg=bgcolour, bd=0, highlightthickness=0)
-        canvas.pack(fill=BOTH, expand=False)
+            # segment:use a canvas inside subframe
+            # each square is at least of dimension 20
+            sqr_w = max(self.main_height // sub_col_num / sub_row_num, 20)
+            width = int(sqr_w * sub_col_num)
+            height = int(sqr_w * sub_row_num)
+            canvas = Canvas(frame, height=height, width=width,
+                            bg=bgcolour, bd=0, highlightthickness=0)
+            canvas.pack(fill=BOTH, expand=False)
 
-        for i in range(0, sub_row_num):
-            for j in range(0, sub_col_num):
-                sqrW = width / sub_col_num
-                sqrH = height / sub_row_num
-                x = j * sqrW
-                y = i * sqrH
-                canvas.create_rectangle(
-                    x, y, x + sqrW, y + sqrH, outline='black')
-                if data:
-                    entry = data[i + row_num][j + col_num] if \
-                        data[i + row_num][
-                            j + col_num] != 0 else ""
-                    canvas.create_text(x + sqrW / 2, y + sqrH / 2,
-                                       text=f"{entry}",
-                                       font=(None, f'{width // sub_col_num // 2}'), fill="black")
-                else:
-                    canvas.create_text(x + sqrW / 2, y + sqrH / 2,
-                                       text=f"{int((j + col_num + 1))}",
-                                       font=(None, f'{width // sub_col_num // 2}'), fill="red")
-        # end of segment
+            for i in range(0, sub_row_num):
+                for j in range(0, sub_col_num):
+                    sqrW = width / sub_col_num
+                    sqrH = height / sub_row_num
+                    x = j * sqrW
+                    y = i * sqrH
+                    canvas.create_rectangle(
+                        x, y, x + sqrW, y + sqrH, outline='black')
+                    if data:
+                        entry = data[i + row_num][j + col_num] if \
+                            data[i + row_num][
+                                j + col_num] != 0 else ""
+                        canvas.create_text(x + sqrW / 2, y + sqrH / 2,
+                                           text=f"{entry}",
+                                           font=(None, f'{width // sub_col_num // 2}'), fill="black")
+                    else:
+                        canvas.create_text(x + sqrW / 2, y + sqrH / 2,
+                                           text=f"{int((j + col_num + 1))}",
+                                           font=(None, f'{width // sub_col_num // 2}'), fill="red")
+            # end of segment
 
-        # for i in range(sub_row_num):
-        #     for j in range(sub_col_num):
-        #         label = Label(frame, width=2, text=col_num+j+1,
-        #                       bg=bgcolour, justify="center", borderwidth=1, relief="solid")
-        #         label.grid(row=i+1, column=j+1,
-        #                    sticky="nsew", ipady=2)
-        frame.grid(row=row_num + 1, column=col_num + 1)
+            # for i in range(sub_row_num):
+            #     for j in range(sub_col_num):
+            #         label = Label(frame, width=2, text=col_num+j+1,
+            #                       bg=bgcolour, justify="center", borderwidth=1, relief="solid")
+            #         label.grid(row=i+1, column=j+1,
+            #                    sticky="nsew", ipady=2)
+            frame.grid(row=row_num + 1, column=col_num + 1)
 
-    def draw_whole_grid(self, row, col, sub_row_num, sub_col_num, data):
+    def draw_canvas(self, duo=False):
+        if duo:
+            scrollbar_h = Scrollbar(self.main_frame, orient=HORIZONTAL, command=h_scroll)
+            scrollbar_v = Scrollbar(self.main_frame, orient=VERTICAL, command=v_scroll)
+            scrollbar_h.pack(side=BOTTOM, fill=X, expand=True)
+            canvas1.pack(side=LEFT, fill=BOTH, expand=True, padx=10)
+            canvas2.pack(side=LEFT, fill=BOTH, expand=True, padx=10)
+            scrollbar_v.pack(side=RIGHT, fill=Y, expand=True)
+            canvas1.configure(xscrollcommand=scrollbar_h.set)
+            canvas1.configure(yscrollcommand=scrollbar_v.set)
+            canvas2.configure(xscrollcommand=scrollbar_h.set)
+            canvas2.configure(yscrollcommand=scrollbar_v.set)
+            canvas1.bind('<Configure>', lambda e: canvas1.configure(scrollregion=canvas1.bbox('all')))
+            canvas2.bind('<Configure>', lambda e: canvas2.configure(scrollregion=canvas2.bbox('all')))
+            inner_frame1 = Frame(canvas1)
+            inner_frame2 = Frame(canvas2)
+            canvas1.create_window((0, 0), window=inner_frame1, anchor='nw')
+            canvas2.create_window((0, 0), window=inner_frame2, anchor='nw')
+
+            return inner_frame1, inner_frame2
+        else:
+            canvas = Canvas(self.main_frame, height=self.main_height, width=self.main_height)
+            scrollbar_h = Scrollbar(self.main_frame, orient=HORIZONTAL, command=canvas.xview)
+            scrollbar_v = Scrollbar(self.main_frame, orient=VERTICAL, command=canvas.yview)
+            scrollbar_h.pack(side=BOTTOM, fill=X)
+            canvas.pack(side=LEFT, fill=BOTH, expand=True)
+            scrollbar_v.pack(side=RIGHT, fill=Y)
+            canvas.configure(xscrollcommand=scrollbar_h.set)
+            canvas.configure(yscrollcommand=scrollbar_v.set)
+            canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox('all')))
+            inner_frame = Frame(canvas)
+            canvas.create_window((0, 0), window=inner_frame, anchor='nw')
+
+            return inner_frame
+
+    def draw_whole_grid(self, row, col, sub_row_num, sub_col_num):
         self.clear()
         colour = "#D0ffff"
-        # add scroll bars to main frame when it shows a grid
-        canvas = Canvas(self.main_frame, height=self.main_height, width=self.main_height)
-        scrollbar_h = Scrollbar(self.main_frame, orient=HORIZONTAL, command=canvas.xview)
-        scrollbar_v = Scrollbar(self.main_frame, orient=VERTICAL, command=canvas.yview)
-        scrollbar_h.pack(side=BOTTOM, fill=X)
-        canvas.pack(side=LEFT, fill=BOTH, expand=True)
-        scrollbar_v.pack(side=RIGHT, fill=Y)
-        canvas.configure(xscrollcommand=scrollbar_h.set)
-        canvas.configure(yscrollcommand=scrollbar_v.set)
-        canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox('all')))
-        inner_frame = Frame(canvas)
-        canvas.create_window((0, 0), window=inner_frame, anchor='nw')
+        if self.puzzle_solution_1 and self.puzzle_solution_2:
+            inner_frames = self.draw_canvas(True)
+            draw_list = [[inner_frames[0], self.puzzle_solution_1], [inner_frames[1], self.puzzle_solution_2]]
+        else:
+            inner_frame = self.draw_canvas()
+            solution = self.puzzle_solution_1 or self.puzzle_solution_2 or (self.puzzle_data, "", None)
+            draw_list = [[inner_frame, solution]]
 
         for row_num in range(0, row, sub_row_num):
             for col_num in range(0, col, sub_col_num):
-                self.draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, colour, inner_frame, data)
+                self.draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, colour, draw_list)
                 colour = self.change_colour(colour)
             if sub_row_num % 2 == 0:
                 colour = self.change_colour(colour)
 
-        if self.brute_force_timer is not None:
-            timer_text = f"Brute Force took {self.brute_force_timer:.5f} s."
-            self.timer_frame = Frame(self.root)
-            timer_label = Label(self.timer_frame, text=timer_text, font=("Arial", 24))
-            timer_label.pack(side=BOTTOM)
-            self.timer_frame.place(relx=0.5, y=self.main_height+100, anchor='s')
+        # if self.brute_force_timer is not None:
+        #     timer_text = f"Brute Force took {self.brute_force_timer:.5f} s."
+        #     self.timer_frame = Frame(self.root)
+        #     timer_label = Label(self.timer_frame, text=timer_text, font=("Arial", 24))
+        #     timer_label.pack(side=BOTTOM)
+        #     self.timer_frame.place(relx=0.5, y=self.main_height+100, anchor='s')
 
     def submit(self):
         self.bottom_frame.children['!button2'].configure(state="active")
@@ -124,23 +159,23 @@ class SudokuBoard:
         match self.clicked.get():
             case "9x9":
                 self.generate_board(9)
-                self.draw_whole_grid(9, 9, 3, 3, self.puzzle_data)
+                self.draw_whole_grid(9, 9, 3, 3)
             case "12x12":
                 self.generate_board(12)
-                self.draw_whole_grid(12, 12, 3, 4, self.puzzle_data)
+                self.draw_whole_grid(12, 12, 3, 4)
             case "16x16":
                 self.generate_board(16)
-                self.draw_whole_grid(16, 16, 4, 4, self.puzzle_data)
+                self.draw_whole_grid(16, 16, 4, 4)
             case "25x25":
                 self.generate_board(25)
-                self.draw_whole_grid(25, 25, 5, 5, self.puzzle_data)
+                self.draw_whole_grid(25, 25, 5, 5)
             case "100x100":
                 self.generate_board(100)
                 self.bottom_frame.children['!button2'].configure(state="disabled")
-                self.draw_whole_grid(100, 100, 10, 10, self.puzzle_data)
+                self.draw_whole_grid(100, 100, 10, 10)
             case "Select Options":
                 self.draw_whole_grid(self.size_data, self.size_data, int(
-                    math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)), self.puzzle_data)
+                    math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)))
 
     def browse_files(self):
         label_file_explorer = Label(self.main_frame,
@@ -250,31 +285,37 @@ class SudokuBoard:
     def on_click_solve_brute_force(self):
         self.clear()
         brute_force = BruteForce(self.puzzle_data, self.size_data, self.row_set, self.col_set, self.sub_grid_set)
-        self.solve_puzzle(brute_force, 'bf')
+        self.solve_puzzle(brute_force, SolverType.BF)
 
     def on_click_solve_csp(self):
         self.clear()
         csp = CSP(self.puzzle_data, self.row_set, self.col_set, self.sub_grid_set)
-        self.solve_puzzle(csp, 'csp')
+        brute_force = BruteForce(self.puzzle_data, self.size_data, self.row_set, self.col_set, self.sub_grid_set)
+        self.solve_puzzle(brute_force, SolverType.BF)
 
     def solve_puzzle(self, solver, mode):
         start = time.time()
         max_time = start + 300
-        solution = self.puzzle_solution_bf if mode == 'bf' else self.puzzle_solution_csp
         while time.time() < max_time:
             if solver.solve():
-                solution = brute_force.return_board()
-                print(f"Brute Force took {time.time() - start} s") 
-                self.brute_force_timer = time.time() - start
+                solved_puzzle = solver.return_board()
+                print(f"Brute Force took {time.time() - start} s")
+                solution = (solved_puzzle, time.time() - start, mode)
+
+                if self.puzzle_solution_1:
+                    self.puzzle_solution_2 = solution
+                else:
+                    self.puzzle_solution_1 = solution
+
                 self.draw_whole_grid(self.size_data, self.size_data, int(
-                    math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)), solution)
+                    math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)))
                 break
-            elif mode == 'bf' and brute_force.current_limit < brute_force.max_fail:
+            elif mode is SolverType.BF and solver.current_limit < solver.max_fail:
                 self.display_message("This is an invalid board that has no solution.")
                 break
-            if mode == 'bf' and brute_force.max_fail < brute_force.current_limit:
-                print("Increasing the depth from", brute_force.max_fail)
-                brute_force.increase_max_depth()
+            if mode is SolverType.BF and solver.max_fail < solver.current_limit:
+                print("Increasing the depth from", solver.max_fail)
+                solver.increase_max_depth()
         else:
             self.display_message("Timer ran out. No solution found.")
 
@@ -316,6 +357,11 @@ class SudokuBoard:
         btn_exit.grid(row=0, column=16)
 
         self.root.mainloop()
+
+
+class SolverType(Enum):
+    BF = "Brute Force"
+    CSP = "CSP"
 
 
 if __name__ == "__main__":
