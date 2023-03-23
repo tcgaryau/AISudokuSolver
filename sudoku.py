@@ -59,8 +59,7 @@ class SudokuBoard:
             solution_display = item[1]
             puzzle_data = solution_display.puzzle_data
             if solver_type := solution_display.solver_type:
-                solver_name = solver_type.value
-                timer_text = f"{solver_name} took {solution_display.time_cost} seconds."
+                timer_text = f"{solver_type.value} took {solution_display.time_cost} seconds."
                 print(timer_text)
 
             # segment:use a canvas inside subframe
