@@ -60,9 +60,8 @@ class SudokuBoard:
             puzzle_data = solution_display.puzzle_data
             if solver_type := solution_display.solver_type:
                 solver_name = solver_type.value
-                title = f"{solver_name} Solver"
                 timer_text = f"{solver_name} took {solution_display.time_cost} seconds."
-                print(title, timer_text)
+                print(timer_text)
 
             # segment:use a canvas inside subframe
             # each square is at least of dimension 20
