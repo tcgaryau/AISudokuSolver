@@ -45,6 +45,10 @@ class SudokuBoard:
                 widgets.destroy()
                 cells.clear()
 
+    def clear_data(self):
+        self.puzzle_data = []
+        self.puzzle_solution_1 = None
+        self.puzzle_solution_2 = None
 
     def change_colour(self, colour):
         return "#ffffd0" if colour == "#D0ffff" else "#D0ffff"
@@ -95,6 +99,17 @@ class SudokuBoard:
 
     def draw_canvas(self, duo=False):
         if duo:
+            canvas1 = Canvas(self.main_frame, height=self.main_height, width=self.main_height)
+            canvas2 = Canvas(self.main_frame, height=self.main_height, width=self.main_height)
+
+            def h_scroll(*args):
+                canvas1.xview(*args)
+                canvas2.xview(*args)
+
+            def v_scroll(*args):
+                canvas1.yview(*args)
+                canvas2.yview(*args)
+
             scrollbar_h = Scrollbar(self.main_frame, orient=HORIZONTAL, command=h_scroll)
             scrollbar_v = Scrollbar(self.main_frame, orient=VERTICAL, command=v_scroll)
             scrollbar_h.pack(side=BOTTOM, fill=X, expand=True)
@@ -280,10 +295,12 @@ class SudokuBoard:
 
     def create_sudoku(self):
         self.clear()
+        self.clear_data()
         self.drop_down_menu()
 
     def on_click_solve_brute_force(self):
         self.clear()
+        
         brute_force = BruteForce(self.puzzle_data, self.size_data, self.row_set, self.col_set, self.sub_grid_set)
         self.solve_puzzle(brute_force, SolverType.BF)
 
@@ -292,6 +309,10 @@ class SudokuBoard:
         csp = CSP(self.puzzle_data, self.row_set, self.col_set, self.sub_grid_set)
         brute_force = BruteForce(self.puzzle_data, self.size_data, self.row_set, self.col_set, self.sub_grid_set)
         self.solve_puzzle(brute_force, SolverType.BF)
+
+    def on_click_clear(self):
+        self.clear()
+        self.clear_data()
 
     def solve_puzzle(self, solver, mode):
         start = time.time()
@@ -350,7 +371,7 @@ class SudokuBoard:
                                command=self.on_click_solve_csp, width=15, height=2, state="disabled")
         btn_solve_csp.grid(row=0, column=8)
 
-        btn_clear = Button(self.bottom_frame, text="Clear", font=btnFont, command=self.clear, width=15, height=2)
+        btn_clear = Button(self.bottom_frame, text="Clear", font=btnFont, command=self.on_click_clear, width=15, height=2)
         btn_clear.grid(row=0, column=12)
 
         btn_exit = Button(self.bottom_frame, text="Exit", font=btnFont, command=exit, width=15, height=2)
