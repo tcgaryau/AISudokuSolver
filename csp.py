@@ -20,7 +20,7 @@ class Square:
         # TODO: add a subgrid store
 
     def __str__(self):
-        return f"{self.row} {self.col} {self.domain} {self.neighbors}"
+        return f"Square {self.row} {self.col} domain: {self.domain} length of neighbors: {len(self.neighbors)}"
 
 
 class Arc:
@@ -35,7 +35,6 @@ class Arc:
 
 
 class CSP:
-
     def __init__(self, puzzle_data):
         self.puzzle_data = copy.deepcopy(puzzle_data)
         # self.row_set = copy.deepcopy(row_set)
@@ -44,7 +43,7 @@ class CSP:
         self.size_data = len(puzzle_data)
         self.board = None
         self.unassigned = set()
-        self.arcs = set()
+        # self.arcs = set()
 
     def init_board(self):
         """ Initialize a sudoku board as a 2D array of Squares, and the domain of each square. """
@@ -66,22 +65,22 @@ class CSP:
 
     def init_constraints(self):
         """ Generate arc constraints for each square. """
+        arcs = set()
         board = self.board
         size = self.size_data
         for i, j in itertools.product(range(size), range(size)):
             square = board[i][j]
             for arc in self._get_arcs(square):
                 if arc.square1 != arc.square2:
-                    self.arcs.add(arc)
-        print(len(self.arcs))
+                    arcs.add(arc)
+        return arcs
 
     def _get_neighbors(self, square):
         return square.neighbors
 
     def _get_arcs(self, square):
         neighbors = self._get_neighbors(square)
-        arcs = []
-        arcs += [Arc(neighbor, square) for neighbor in neighbors]
+        arcs = [Arc(neighbor, square) for neighbor in neighbors]
         return arcs
 
     def _get_consistent_values(self, row, col):
@@ -236,16 +235,17 @@ class CSP:
         :return: a boolean
         """
         revised_list = []
-
         while len(arcs) > 0:
             arc = arcs.pop()
             is_revised, revised_list = self.revise(arc, revised_list)
 
             if is_revised:
                 if len(arc.square1.domain) == 0:
+                    # print("Removed", len(revised_list), "values")
+                    # print("failure from", arc.square1.row, arc.square1.col)
                     return False, revised_list
                 for neighbor in arc.square1.neighbors:
-                    if neighbor is not arc.square2:
+                    if neighbor is not arc.square2 and neighbor is not arc.square1:
                         arcs.add(Arc(neighbor, arc.square1))
         return True, revised_list
 
@@ -261,6 +261,8 @@ class CSP:
         for x in arc.square1.domain:
             # Xi's domain = {1 2 3}, Xj's domain = {1}
             if x in arc.square2.domain:
+                # print("X", x, "from square", arc.square1.row, arc.square1.col, "because square",
+                #       arc.square2.row, arc.square2.col, "has domain", arc.square2.domain)
                 arc.square1.domain.remove(x)
                 revised_list.append((arc.square1, x))
                 return True, revised_list
@@ -333,6 +335,18 @@ def test():
     #     [0, 0, 5, 0, 1, 0, 3, 0, 0]
     # ]
 
+    test_puzzle = [
+        [2, 6, 0, 0, 0, 3, 0, 1, 5],
+        [4, 7, 0, 0, 0, 0, 0, 0, 8],
+        [5, 8, 1, 0, 0, 4, 7, 6, 3],
+        [0, 3, 0, 4, 8, 9, 0, 7, 0],
+        [0, 0, 6, 0, 0, 2, 8, 3, 0],
+        [0, 0, 8, 3, 1, 0, 0, 0, 0],
+        [6, 9, 0, 0, 0, 8, 0, 0, 7],
+        [3, 0, 0, 0, 9, 0, 2, 0, 0],
+        [0, 1, 0, 5, 0, 0, 0, 9, 6]
+    ]
+
     # row_set, col_set, sub_grid_set = test_generate_sets(puzzle)
     import time
     now = time.time()
@@ -344,8 +358,8 @@ def test():
     for i in csp.board:
         for j in i:
             print(j.row, j.col, j.domain)
-    csp.init_constraints()
-    csp.ac3(csp.arcs)
+    arcs = csp.init_constraints()
+    csp.ac3(arcs)
 
     print("After initial AC3 with all arcs")
     for i in csp.board:
