@@ -57,6 +57,8 @@ class SudokuBoard:
         for item in draw_list:
             frame = Frame(item[0])
             data = item[1][0]
+            title = "Title"
+            timer_text = "Timer text"
             print(data)
 
             # segment:use a canvas inside subframe
@@ -67,6 +69,11 @@ class SudokuBoard:
             canvas = Canvas(frame, height=height, width=width,
                             bg=bgcolour, bd=0, highlightthickness=0)
             canvas.pack(fill=BOTH, expand=False)
+
+            timer_frame = Frame(frame)
+            timer_label = Label(timer_frame, text=timer_text, font=("Arial", 24))
+            timer_label.pack(side=BOTTOM)
+
 
             for i in range(0, sub_row_num):
                 for j in range(0, sub_col_num):
@@ -358,7 +365,7 @@ class SudokuBoard:
         self.clicked = StringVar()
 
         self.main_frame = Frame(self.root)
-        self.main_height = self.root.winfo_screenheight() - self.root.winfo_screenheight() * 0.25
+        self.main_height = min(self.root.winfo_screenheight() * 0.75, self.root.winfo_screenwidth() * 0.375)
         Label(self.main_frame, text="Welcome User", font=("Arial", 24)).grid(
             row=0, column=0, columnspan=5, ipady=10)
 
