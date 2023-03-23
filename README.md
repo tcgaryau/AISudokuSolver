@@ -1,2 +1,2 @@
-# AISudokuSolver
-Team 4 for COMP 3981
+#AISudokuSolver
+Team4forCOMP3981
