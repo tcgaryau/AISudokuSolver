@@ -288,7 +288,7 @@ class CSP:
         #     if min_val is None or value < neighbour_frequency[min_val]:
         #         min_val = key
         return sorted(neighbour_frequency, key=neighbour_frequency.get)
-    
+
     def solve(self):
         """
         Initialize the board and constraints, and then solve the puzzle using CSP.
@@ -304,7 +304,7 @@ class CSP:
         """ Generate puzzle data from a Board. """
         for i, j in itertools.product(range(self.size_data), range(self.size_data)):
             self.puzzle_data[i][j] = self.board[i][j].domain[0]
-    
+
     def return_board(self):
         """
         :return: puzzle data, a 2D array
@@ -370,6 +370,17 @@ def test():
     #     [0, 1, 0, 5, 0, 0, 0, 9, 6]
     # ]
 
+    invalid_puzzle = [
+        [3, 6, 9, 0, 8, 4, 1, 5, 7],
+        [1, 5, 8, 2, 9, 7, 0, 6, 4],
+        [4, 7, 2, 6, 5, 1, 3, 8, 9],
+        [7, 2, 1, 5, 6, 3, 4, 9, 8],
+        [9, 8, 5, 4, 7, 2, 6, 3, 1],
+        [6, 3, 4, 9, 1, 8, 5, 7, 2],
+        [8, 1, 3, 7, 4, 5, 9, 2, 6],
+        [5, 9, 7, 1, 2, 6, 8, 4, 3],
+        [2, 4, 6, 8, 3, 9, 7, 1, 5]
+    ]
     hard_puzzle = [[4, 0, 0, 0, 0, 0, 8, 0, 5],
                    [0, 3, 0, 0, 0, 0, 0, 0, 0],
                    [0, 0, 0, 7, 0, 0, 0, 0, 0],
@@ -419,7 +430,7 @@ def test():
     import time
     now = time.time()
     # csp = CSP(puzzle, row_set, col_set, sub_grid_set)
-    csp = CSP(twenty_five_puzzle)
+    csp = CSP(invalid_puzzle)
     csp.init_board()
     csp.init_binary_constraints()
     print("Initial Board")
@@ -431,10 +442,10 @@ def test():
     arcs = csp.init_constraints()
     csp.ac3(arcs)
 
-    # print("After initial AC3 with all arcs")
-    # for i in csp.board:
-    #     for j in i:
-    #         print(j.row, j.col, j.domain)
+    print("After initial AC3 with all arcs")
+    for i in csp.board:
+        for j in i:
+            print(j.row, j.col, j.domain)
     start_time = time.time()
     if final_result := csp.solve_csp():
         print(f"Solved in {time.time() - start_time} seconds")

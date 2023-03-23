@@ -102,8 +102,10 @@ class SudokuBoard:
 
     def draw_canvas(self, duo=False):
         if duo:
-            canvas1 = Canvas(self.main_frame, height=self.main_height, width=self.main_height)
-            canvas2 = Canvas(self.main_frame, height=self.main_height, width=self.main_height)
+            canvas1 = Canvas(
+                self.main_frame, height=self.main_height, width=self.main_height)
+            canvas2 = Canvas(
+                self.main_frame, height=self.main_height, width=self.main_height)
 
             def h_scroll(*args):
                 canvas1.xview(*args)
@@ -113,8 +115,10 @@ class SudokuBoard:
                 canvas1.yview(*args)
                 canvas2.yview(*args)
 
-            scrollbar_h = Scrollbar(self.main_frame, orient=HORIZONTAL, command=h_scroll)
-            scrollbar_v = Scrollbar(self.main_frame, orient=VERTICAL, command=v_scroll)
+            scrollbar_h = Scrollbar(
+                self.main_frame, orient=HORIZONTAL, command=h_scroll)
+            scrollbar_v = Scrollbar(
+                self.main_frame, orient=VERTICAL, command=v_scroll)
             scrollbar_h.pack(side=BOTTOM, fill=X, expand=True)
             canvas1.pack(side=LEFT, fill=BOTH, expand=True, padx=10)
             canvas2.pack(side=LEFT, fill=BOTH, expand=True, padx=10)
@@ -123,8 +127,10 @@ class SudokuBoard:
             canvas1.configure(yscrollcommand=scrollbar_v.set)
             canvas2.configure(xscrollcommand=scrollbar_h.set)
             canvas2.configure(yscrollcommand=scrollbar_v.set)
-            canvas1.bind('<Configure>', lambda e: canvas1.configure(scrollregion=canvas1.bbox('all')))
-            canvas2.bind('<Configure>', lambda e: canvas2.configure(scrollregion=canvas2.bbox('all')))
+            canvas1.bind('<Configure>', lambda e: canvas1.configure(
+                scrollregion=canvas1.bbox('all')))
+            canvas2.bind('<Configure>', lambda e: canvas2.configure(
+                scrollregion=canvas2.bbox('all')))
             inner_frame1 = Frame(canvas1)
             inner_frame2 = Frame(canvas2)
             canvas1.create_window((0, 0), window=inner_frame1, anchor='nw')
@@ -132,15 +138,19 @@ class SudokuBoard:
 
             return inner_frame1, inner_frame2
         else:
-            canvas = Canvas(self.main_frame, height=self.main_height, width=self.main_height)
-            scrollbar_h = Scrollbar(self.main_frame, orient=HORIZONTAL, command=canvas.xview)
-            scrollbar_v = Scrollbar(self.main_frame, orient=VERTICAL, command=canvas.yview)
+            canvas = Canvas(self.main_frame,
+                            height=self.main_height, width=self.main_height)
+            scrollbar_h = Scrollbar(
+                self.main_frame, orient=HORIZONTAL, command=canvas.xview)
+            scrollbar_v = Scrollbar(
+                self.main_frame, orient=VERTICAL, command=canvas.yview)
             scrollbar_h.pack(side=BOTTOM, fill=X)
             canvas.pack(side=LEFT, fill=BOTH, expand=True)
             scrollbar_v.pack(side=RIGHT, fill=Y)
             canvas.configure(xscrollcommand=scrollbar_h.set)
             canvas.configure(yscrollcommand=scrollbar_v.set)
-            canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox('all')))
+            canvas.bind('<Configure>', lambda e: canvas.configure(
+                scrollregion=canvas.bbox('all')))
             inner_frame = Frame(canvas)
             canvas.create_window((0, 0), window=inner_frame, anchor='nw')
 
@@ -151,15 +161,18 @@ class SudokuBoard:
         colour = "#D0ffff"
         if self.puzzle_solution_1 and self.puzzle_solution_2:
             inner_frames = self.draw_canvas(True)
-            draw_list = [[inner_frames[0], self.puzzle_solution_1], [inner_frames[1], self.puzzle_solution_2]]
+            draw_list = [[inner_frames[0], self.puzzle_solution_1], [
+                inner_frames[1], self.puzzle_solution_2]]
         else:
             inner_frame = self.draw_canvas()
-            solution = self.puzzle_solution_1 or self.puzzle_solution_2 or SolutionDisplay(self.puzzle_data, "", None)
+            solution = self.puzzle_solution_1 or self.puzzle_solution_2 or SolutionDisplay(
+                self.puzzle_data, "", None)
             draw_list = [[inner_frame, solution]]
 
         for row_num in range(0, row, sub_row_num):
             for col_num in range(0, col, sub_col_num):
-                self.draw_sub_grid(row_num, col_num, sub_row_num, sub_col_num, colour, draw_list)
+                self.draw_sub_grid(row_num, col_num, sub_row_num,
+                                   sub_col_num, colour, draw_list)
                 colour = self.change_colour(colour)
             if sub_row_num % 2 == 0:
                 colour = self.change_colour(colour)
@@ -191,7 +204,7 @@ class SudokuBoard:
                 self.generate_board(100)
                 self.toggle_button('!button2', False)
                 self.draw_whole_grid(100, 100, 10, 10)
-            case "Select Options":
+            case "Select Options" | "From File":
                 self.draw_whole_grid(self.size_data, self.size_data, int(
                     math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)))
 
@@ -232,8 +245,8 @@ class SudokuBoard:
             can_put_in_row = value_to_insert not in self.row_set[row]
             can_put_in_col = value_to_insert not in self.col_set[col]
             can_put_in_subgrid = value_to_insert not in \
-                                 self.sub_grid_set[(row // subgrid_size) * subgrid_size +
-                                                   (col // math.ceil(math.sqrt(size)))]
+                self.sub_grid_set[(row // subgrid_size) * subgrid_size +
+                                  (col // math.ceil(math.sqrt(size)))]
             if board[row][col] == 0 and can_put_in_row and can_put_in_col and can_put_in_subgrid:
                 board[row][col] = value_to_insert
                 self.row_set[row].add(value_to_insert)
@@ -276,6 +289,7 @@ class SudokuBoard:
 
     def drop_down_menu(self):
         options = [
+            "From File",
             "9x9",
             "12x12",
             "16x16",
@@ -289,7 +303,8 @@ class SudokuBoard:
         drop = OptionMenu(self.main_frame, self.clicked, *options)
         drop.config(font=btnFont, width=13, height=2)
         drop.pack()
-        button = Button(self.main_frame, text="Submit", font=btnFont, command=self.submit, width=15, height=2)
+        button = Button(self.main_frame, text="Submit",
+                        font=btnFont, command=self.submit, width=15, height=2)
         button.pack()
 
     def display_message(self, msg):
@@ -306,7 +321,8 @@ class SudokuBoard:
     def on_click_solve_brute_force(self):
         self.clear()
         self.toggle_button("!button2", False)
-        brute_force = BruteForce(self.puzzle_data, self.size_data, self.row_set, self.col_set, self.sub_grid_set)
+        brute_force = BruteForce(
+            self.puzzle_data, self.size_data, self.row_set, self.col_set, self.sub_grid_set)
         self.solve_puzzle(brute_force, SolverType.BF)
 
     def on_click_solve_csp(self):
@@ -332,7 +348,8 @@ class SudokuBoard:
             if solver.solve():
                 solved_puzzle = solver.return_board()
                 print(f"Brute Force took {time.time() - start} s")
-                solution = SolutionDisplay(solved_puzzle, time.time() - start, mode)
+                solution = SolutionDisplay(
+                    solved_puzzle, time.time() - start, mode)
 
                 if self.puzzle_solution_1:
                     self.puzzle_solution_2 = solution
@@ -343,7 +360,12 @@ class SudokuBoard:
                     math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)))
                 break
             elif mode is SolverType.BF and solver.current_limit < solver.max_fail:
-                self.display_message("This is an invalid board that has no solution.")
+                self.display_message(
+                    "This is an invalid board that has no solution.")
+                break
+            elif mode is SolverType.CSP:
+                self.display_message(
+                    "This is an invalid board that has no solution.")
                 break
             if mode is SolverType.BF and solver.max_fail < solver.current_limit:
                 print("Increasing the depth from", solver.max_fail)
@@ -360,7 +382,8 @@ class SudokuBoard:
         self.clicked = StringVar()
 
         self.main_frame = Frame(self.root)
-        self.main_height = min(self.root.winfo_screenheight() * 0.75, self.root.winfo_screenwidth() * 0.375)
+        self.main_height = min(self.root.winfo_screenheight(
+        ) * 0.75, self.root.winfo_screenwidth() * 0.375)
         Label(self.main_frame, text="Welcome User", font=("Arial", 24)).grid(
             row=0, column=0, columnspan=5, ipady=10)
 
@@ -386,7 +409,8 @@ class SudokuBoard:
                            height=2)
         btn_clear.grid(row=0, column=12)
 
-        btn_exit = Button(self.bottom_frame, text="Exit", font=btnFont, command=exit, width=15, height=2)
+        btn_exit = Button(self.bottom_frame, text="Exit",
+                          font=btnFont, command=exit, width=15, height=2)
         btn_exit.grid(row=0, column=16)
 
         self.root.mainloop()
