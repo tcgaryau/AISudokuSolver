@@ -83,23 +83,23 @@ class CSP:
         arcs = [Arc(neighbor, square) for neighbor in neighbors]
         return arcs
 
-    def _get_consistent_values(self, row, col):
-        """
-        Get values for a squares that are consistent with existing assignments.
-        :param row: a square's row number, int
-        :param col: a square's column number, int
-        :return: a set of consistent values
-        """
-        size = self.size_data
-        sg_row_total = int(math.sqrt(size))
-        sg_col_total = int(math.ceil(math.sqrt(size)))
-        set_index = (row // sg_row_total) * \
-            sg_col_total + (col // sg_col_total)
-        return set(range(1, size + 1)) - set(
-            list(self.row_set[row])
-            + list(self.col_set[col])
-            + list(self.sub_grid_set[set_index])
-        )
+    # def _get_consistent_values(self, row, col):
+    #     """
+    #     Get values for a squares that are consistent with existing assignments.
+    #     :param row: a square's row number, int
+    #     :param col: a square's column number, int
+    #     :return: a set of consistent values
+    #     """
+    #     size = self.size_data
+    #     sg_row_total = int(math.sqrt(size))
+    #     sg_col_total = int(math.ceil(math.sqrt(size)))
+    #     set_index = (row // sg_row_total) * \
+    #         sg_col_total + (col // sg_col_total)
+    #     return set(range(1, size + 1)) - set(
+    #         list(self.row_set[row])
+    #         + list(self.col_set[col])
+    #         + list(self.sub_grid_set[set_index])
+    #     )
 
     def init_binary_constraints(self):
         """ Populate the neighbors field of every square on the current board. """
@@ -241,11 +241,11 @@ class CSP:
 
             if is_revised:
                 if len(arc.square1.domain) == 0:
-                    # print("Removed", len(revised_list), "values")
-                    # print("failure from", arc.square1.row, arc.square1.col)
+                    print("Removed", len(revised_list), "values")
+                    print("failure from", arc.square1.row, arc.square1.col)
                     return False, revised_list
                 for neighbor in arc.square1.neighbors:
-                    if neighbor is not arc.square2 and neighbor is not arc.square1:
+                    if neighbor is not arc.square2:
                         arcs.add(Arc(neighbor, arc.square1))
         return True, revised_list
 
@@ -261,8 +261,8 @@ class CSP:
         for x in arc.square1.domain:
             # Xi's domain = {1 2 3}, Xj's domain = {1}
             if x in arc.square2.domain:
-                # print("X", x, "from square", arc.square1.row, arc.square1.col, "because square",
-                #       arc.square2.row, arc.square2.col, "has domain", arc.square2.domain)
+                print("X", x, "from square", arc.square1.row, arc.square1.col, "because square",
+                      arc.square2.row, arc.square2.col, "has domain", arc.square2.domain)
                 arc.square1.domain.remove(x)
                 revised_list.append((arc.square1, x))
                 return True, revised_list
