@@ -246,7 +246,7 @@ class SudokuBoard:
                 tiles_placed += 1
         self.puzzle_data = board
         self.size_data = len(self.puzzle_data)
-        print(['' if num == 0 else num for row in self.puzzle_data for num in row])
+        print(self.puzzle_data)
 
     def parse_input_file(self, data):
         data = data.split("\n")

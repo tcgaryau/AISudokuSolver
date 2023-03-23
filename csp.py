@@ -20,7 +20,7 @@ class Square:
         # TODO: add a subgrid store
 
     def __str__(self):
-        return f"{self.row} {self.col} {self.domain} {self.neighbors}"
+        return f"Square {self.row} {self.col} domain: {self.domain} length of neighbors: {len(self.neighbors)}"
 
 
 class Arc:
@@ -35,16 +35,15 @@ class Arc:
 
 
 class CSP:
-
-    def __init__(self, puzzle_data, row_set, col_set, sub_grid_set):
+    def __init__(self, puzzle_data):
         self.puzzle_data = copy.deepcopy(puzzle_data)
-        self.row_set = copy.deepcopy(row_set)
-        self.col_set = copy.deepcopy(col_set)
-        self.sub_grid_set = copy.deepcopy(sub_grid_set)
+        # self.row_set = copy.deepcopy(row_set)
+        # self.col_set = copy.deepcopy(col_set)
+        # self.sub_grid_set = copy.deepcopy(sub_grid_set)
         self.size_data = len(puzzle_data)
         self.board = None
         self.unassigned = set()
-        self.arcs = set()
+        # self.arcs = set()
 
     def init_board(self):
         """ Initialize a sudoku board as a 2D array of Squares, and the domain of each square. """
@@ -54,7 +53,8 @@ class CSP:
         for i, j in itertools.product(range(size), range(size)):
             value = puzzle[i][j]
             if value == 0:
-                domain = list(self._get_consistent_values(i, j))
+                # domain = list(self._get_consistent_values(i, j))
+                domain = list(range(1, size + 1))
                 square = Square(i, j, domain)
                 board[i][j] = square
                 if len(domain) > 1:
@@ -65,41 +65,41 @@ class CSP:
 
     def init_constraints(self):
         """ Generate arc constraints for each square. """
+        arcs = set()
         board = self.board
         size = self.size_data
         for i, j in itertools.product(range(size), range(size)):
             square = board[i][j]
             for arc in self._get_arcs(square):
                 if arc.square1 != arc.square2:
-                    self.arcs.add(arc)
-        print(len(self.arcs))
+                    arcs.add(arc)
+        return arcs
 
     def _get_neighbors(self, square):
         return square.neighbors
 
     def _get_arcs(self, square):
         neighbors = self._get_neighbors(square)
-        arcs = []
-        arcs += [Arc(neighbor, square) for neighbor in neighbors]
+        arcs = [Arc(neighbor, square) for neighbor in neighbors]
         return arcs
 
-    def _get_consistent_values(self, row, col):
-        """
-        Get values for a squares that are consistent with existing assignments.
-        :param row: a square's row number, int
-        :param col: a square's column number, int
-        :return: a set of consistent values
-        """
-        size = self.size_data
-        sg_row_total = int(math.sqrt(size))
-        sg_col_total = int(math.ceil(math.sqrt(size)))
-        set_index = (row // sg_row_total) * \
-                    sg_col_total + (col // sg_col_total)
-        return set(range(1, size + 1)) - set(
-            list(self.row_set[row])
-            + list(self.col_set[col])
-            + list(self.sub_grid_set[set_index])
-        )
+    # def _get_consistent_values(self, row, col):
+    #     """
+    #     Get values for a squares that are consistent with existing assignments.
+    #     :param row: a square's row number, int
+    #     :param col: a square's column number, int
+    #     :return: a set of consistent values
+    #     """
+    #     size = self.size_data
+    #     sg_row_total = int(math.sqrt(size))
+    #     sg_col_total = int(math.ceil(math.sqrt(size)))
+    #     set_index = (row // sg_row_total) * \
+    #         sg_col_total + (col // sg_col_total)
+    #     return set(range(1, size + 1)) - set(
+    #         list(self.row_set[row])
+    #         + list(self.col_set[col])
+    #         + list(self.sub_grid_set[set_index])
+    #     )
 
     def init_binary_constraints(self):
         """ Populate the neighbors field of every square on the current board. """
@@ -129,7 +129,7 @@ class CSP:
             shift_col = col // sg_col_total * sg_col_total
             for m, n in itertools.product(range(sg_row_total), range(sg_col_total)):
                 square = board[m + shift_row][n + shift_col]
-                if m != row and n != col:
+                if m + shift_row != row and n + shift_col != col:
                     neighbors.add(square)
             curr_square.neighbors = neighbors
 
@@ -144,30 +144,29 @@ class CSP:
         next_empty = self.select_unassigned()
         values = self.find_least_constraining_value(next_empty)
         saved_values = copy.deepcopy(values)
-        for v in values:
-            if self.ac3_is_consistent(next_empty, v):
+        for v in saved_values:
+            if self.is_consistent(next_empty, v):
+                # Add the value to assignment
                 next_empty.domain = [v]
-                result, revised_list = self.ac3(next_empty)
-                if result:
-                    next_empty.assigned = True
-                    self.unassigned.remove(next_empty)
+                next_empty.assigned = True
+                self.unassigned.remove(next_empty)
+
+                # MAC using ac-3
+                is_inference, revised_list = self.mac(next_empty)
+                if is_inference:
                     if self.solve_csp():
                         return True
-
-                    next_empty.assigned = False
-                    self.unassigned.add(next_empty)
-                next_empty.domain = saved_values
-
                 for square, value in revised_list:
                     square.domain.append(value)
-        # for i in range(self.size_data):
-        #     for j in range(self.size_data):
-        #         print(self.board[i][j].domain, end=" ")
-        #     print("\n")
+
+                # Remove the value from assignment
+                next_empty.domain = saved_values
+                next_empty.assigned = False
+                self.unassigned.add(next_empty)
 
         return False
 
-    def ac3_is_consistent(self, next_empty, v):
+    def is_consistent(self, next_empty, v):
         return not any(
             len(neighbor.domain) == 1 and v in neighbor.domain
             for neighbor in next_empty.neighbors
@@ -217,29 +216,38 @@ class CSP:
                 md.append(square)
         return md
 
-    def ac3(self, square):
+    def mac(self, square):
+        """
+        Maintaining Arc Consistency using AC-3 algorithm.
+        :param square: a Square
+        """
+        arcs = set()
+        # We start with only the arcs (Xj, Xi) for all Xj that are unassigned variables that are neighbors of Xi
+        for neighbor in square.neighbors:
+            if not neighbor.assigned:
+                arcs.add(Arc(neighbor, square))
+
+        return self.ac3(arcs)
+
+    def ac3(self, arcs):
         """
         Check if the domain of a square is consistent with its neighbors.
         :param square: a Square
         :return: a boolean
         """
         revised_list = []
-        # arcs = set()
+        while len(arcs) > 0:
+            arc = arcs.pop()
+            # is_revised, revised_list = self.revise(arc, revised_list)
 
-        # for neighbor in square.neighbors:
-        #     if not neighbor.assigned and neighbor != square:
-        #         self.arcs.add(Arc(neighbor, square))
-
-        while self.arcs:
-            arc = self.arcs.pop()
-            result, revised_list = self.revise(arc, revised_list)
-
-            if result:
+            if self.revise(arc, revised_list):
                 if len(arc.square1.domain) == 0:
+                    # print("Removed", len(revised_list), "values")
+                    # print("failure from", arc.square1.row, arc.square1.col)
                     return False, revised_list
                 for neighbor in arc.square1.neighbors:
-                    if neighbor is not [arc.square2, arc.square1]:
-                        self.arcs.add(Arc(neighbor, arc.square1))
+                    if neighbor is not arc.square2:
+                        arcs.add(Arc(neighbor, arc.square1))
         return True, revised_list
 
     def revise(self, arc, revised_list):
@@ -248,29 +256,18 @@ class CSP:
         :param arc: an Arc
         :return: a boolean
         """
-        revised = False
+        if len(arc.square2.domain) > 1:
+            return False
+
         for x in arc.square1.domain:
             # Xi's domain = {1 2 3}, Xj's domain = {1}
-            if len(arc.square2.domain) == 1 and x in arc.square2.domain:
+            if x in arc.square2.domain:
+                # print("X", x, "from square", arc.square1.row, arc.square1.col, "because square",
+                #       arc.square2.row, arc.square2.col, "has domain", arc.square2.domain)
                 arc.square1.domain.remove(x)
                 revised_list.append((arc.square1, x))
-                revised = True
-        return revised, revised_list
-
-    def is_consistent(self, value, square2):
-        """
-        Check if a value is consistent with a square.
-        :param value: a value
-        :param square2: a Square
-        :return: a boolean
-        """
-        return value not in square2.domain
-
-        # for domain_value in square2.domain:
-        #     if domain_value != value:
-        #         return False
-        #
-        # return True
+                return True
+        return False
 
     def find_least_constraining_value(self, square):
         """
@@ -337,17 +334,17 @@ def test():
     #     [0, 8, 0, 5, 0, 7, 0, 6, 0],
     #     [1, 0, 3, 0, 0, 0, 7, 0, 2]
     # ]
-    puzzle = [
-        [4, 1, 7, 3, 6, 9, 8, 0, 5],
-        [0, 3, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 7, 0, 0, 0, 0, 0],
-        [0, 2, 0, 0, 0, 0, 0, 6, 0],
-        [0, 0, 0, 0, 8, 0, 4, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0, 0],
-        [0, 0, 0, 6, 0, 3, 0, 7, 0],
-        [5, 0, 0, 2, 0, 0, 0, 0, 0],
-        [1, 0, 4, 0, 7, 5, 2, 9, 3],
-    ]
+    # puzzle = [
+    #     [4, 1, 7, 3, 6, 9, 8, 0, 5],
+    #     [0, 3, 0, 0, 0, 0, 0, 0, 0],
+    #     [0, 0, 0, 7, 0, 0, 0, 0, 0],
+    #     [0, 2, 0, 0, 0, 0, 0, 6, 0],
+    #     [0, 0, 0, 0, 8, 0, 4, 0, 0],
+    #     [0, 0, 0, 0, 1, 0, 0, 0, 0],
+    #     [0, 0, 0, 6, 0, 3, 0, 7, 0],
+    #     [5, 0, 0, 2, 0, 0, 0, 0, 0],
+    #     [1, 0, 4, 0, 7, 5, 2, 9, 3],
+    # ]
     # puzzle = [
     #     [1, 4, 3, 7, 2, 8, 9, 5, 0],
     #     [9, 0, 0, 3, 0, 5, 0, 0, 1],
@@ -360,17 +357,83 @@ def test():
     #     [0, 0, 5, 0, 1, 0, 3, 0, 0]
     # ]
 
-    row_set, col_set, sub_grid_set = test_generate_sets(puzzle)
+    # test_puzzle = [
+    #     [2, 6, 0, 0, 0, 3, 0, 1, 5],
+    #     [4, 7, 0, 0, 0, 0, 0, 0, 8],
+    #     [5, 8, 1, 0, 0, 4, 7, 6, 3],
+    #     [0, 3, 0, 4, 8, 9, 0, 7, 0],
+    #     [0, 0, 6, 0, 0, 2, 8, 3, 0],
+    #     [0, 0, 8, 3, 1, 0, 0, 0, 0],
+    #     [6, 9, 0, 0, 0, 8, 0, 0, 7],
+    #     [3, 0, 0, 0, 9, 0, 2, 0, 0],
+    #     [0, 1, 0, 5, 0, 0, 0, 9, 6]
+    # ]
+
+    hard_puzzle = [[4, 0, 0, 0, 0, 0, 8, 0, 5],
+                   [0, 3, 0, 0, 0, 0, 0, 0, 0],
+                   [0, 0, 0, 7, 0, 0, 0, 0, 0],
+                   [0, 2, 0, 0, 0, 0, 0, 6, 0],
+                   [0, 0, 0, 0, 8, 0, 4, 0, 0],
+                   [0, 0, 0, 0, 1, 0, 0, 0, 0],
+                   [0, 0, 0, 6, 0, 3, 0, 7, 0],
+                   [5, 0, 0, 2, 0, 0, 0, 0, 0],
+                   [1, 0, 4, 0, 0, 0, 0, 0, 0],
+                   ]
+    test_puzzle = [[4, 0, 0, 0, 0, 0, 8, 0, 5],
+                   [0, 3, 0, 0, 0, 0, 0, 0, 0],
+                   [0, 0, 0, 7, 0, 0, 0, 0, 0],
+                   [0, 2, 0, 0, 0, 0, 0, 6, 0],
+                   [0, 0, 0, 0, 8, 0, 4, 0, 0],
+                   [0, 0, 0, 0, 1, 0, 0, 0, 0],
+                   [0, 0, 0, 6, 0, 3, 0, 7, 0],
+                   [5, 0, 0, 2, 0, 0, 0, 0, 0],
+                   [1, 0, 4, 0, 0, 0, 0, 0, 0],
+                   ]
+
+    sixteen_puzzle = [[0, 4, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 10, 0, 0, 0],
+                      [1, 7, 0, 6, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0],
+                      [0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0, 3, 11, 9, 0],
+                      [0, 0, 0, 0, 0, 3, 0, 0, 0, 6, 0, 0, 4, 0, 16, 0],
+                      [0, 13, 0, 0, 0, 0, 3, 15, 0, 0, 11, 14, 12, 0, 0, 16],
+                      [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 15, 0, 5, 0, 0, 0],
+                      [0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 10, 0, 0, 6, 0],
+                      [0, 0, 0, 0, 0, 0, 13, 0, 0, 16, 0, 0, 0, 0, 2, 0],
+                      [0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 7, 0],
+                      [10, 0, 0, 7, 16, 0, 0, 0, 0, 0, 14, 0, 0, 4, 0, 0],
+                      [0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0],
+                      [0, 0, 9, 16, 0, 5, 0, 2, 0, 15, 7, 8, 0, 1, 0, 0],
+                      [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11],
+                      [0, 0, 0, 0, 12, 8, 0, 0, 16, 0, 0, 0, 0, 6, 0, 0],
+                      [8, 0, 0, 10, 1, 13, 0, 0, 0, 4, 0, 0, 0, 2, 3, 0],
+                      [14, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0]]
+
+    twenty_five_puzzle = [[0, 3, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 8, 0, 0, 0, 0, 0], [21, 0, 0, 14, 8, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 0], [25, 0, 0, 0, 0, 4, 0, 9, 0, 13, 8, 0, 6, 0, 0, 18, 0, 0, 0, 0, 14, 19, 0, 10, 0], [0, 0, 9, 6, 0, 0, 0, 17, 10, 0, 0, 0, 0, 0, 0,
+                                                                                                                                                                                                                                                                              0, 0, 0, 0, 0, 18, 0, 2, 24, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 16, 4], [0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 23, 0, 2, 10], [0, 0, 0, 0, 0, 0, 7, 0, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 3, 0, 0, 6, 0], [0, 0, 16, 0, 0, 12,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 14, 10, 0, 22, 0, 6, 25, 0, 0, 23, 0, 0, 0, 17, 18, 0, 0, 0, 0, 0, 0], [0, 0, 0, 10, 6, 16, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 13, 18, 17], [2, 0, 0, 0, 0, 0, 25, 8, 0, 0, 0, 21, 0, 3, 0, 0, 0, 0, 0, 0, 0,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 19, 24], [0, 0, 23, 0, 0, 0, 0, 0, 5, 0, 9, 2, 0, 24, 11, 0, 22, 7, 0, 0, 0, 12, 0, 0, 0], [0, 7, 11, 0, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 16, 6, 0, 3, 0, 0, 0, 0, 0], [0, 0, 0, 0, 20, 0, 22, 3, 0, 0, 6, 0, 16, 0, 0, 0, 0, 0, 2, 17, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 10, 25, 24, 11, 20, 0, 3, 0, 0], [23, 0, 0, 0, 0, 0,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    0, 16, 0, 0, 0, 0, 13, 0, 0, 0, 14, 0, 0, 7, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 14, 0, 0, 0, 0, 20, 0, 0, 0, 0, 9, 0, 0, 0, 0], [16, 0, 0, 0, 0, 13, 0, 0, 25, 17, 5, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21], [12, 0, 0, 8, 0, 7, 0, 4, 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    0, 0, 0], [0, 0, 20, 0, 0, 0, 0, 15, 0, 0, 24, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 7, 0, 0], [0, 22, 24, 0, 7, 5, 21, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 4, 0, 0], [0, 0, 0, 0, 15, 0, 0, 0, 7, 18, 0, 22, 0, 4, 16, 0, 0, 8, 0, 0, 0, 0, 0, 23, 0], [6, 0, 0, 0, 0, 0, 16, 0, 19, 0, 0, 0, 25, 0, 0, 0, 0, 0, 4, 0, 0, 0, 14, 0, 0], [0, 0, 0, 9, 12, 3, 0, 0, 0, 0, 13, 8, 23, 14, 17, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0]]
+    empty_twenty_five_puzzle = [[0 for _ in range(25)] for _ in range(25)]
+    # row_set, col_set, sub_grid_set = test_generate_sets(puzzle)
     import time
     now = time.time()
-    csp = CSP(puzzle, row_set, col_set, sub_grid_set)
+    # csp = CSP(puzzle, row_set, col_set, sub_grid_set)
+    csp = CSP(twenty_five_puzzle)
     csp.init_board()
     csp.init_binary_constraints()
-    csp.init_constraints()
     print("Initial Board")
     for i in csp.board:
         for j in i:
             print(j.row, j.col, j.domain)
+
+    # preprocessing using ac3
+    arcs = csp.init_constraints()
+    csp.ac3(arcs)
+
+    # print("After initial AC3 with all arcs")
+    # for i in csp.board:
+    #     for j in i:
+    #         print(j.row, j.col, j.domain)
     start_time = time.time()
     if final_result := csp.solve_csp():
         print(f"Solved in {time.time() - start_time} seconds")
@@ -382,20 +445,20 @@ def test():
             print(j.row, j.col, j.domain)
 
 
-def test_generate_sets(puzzle_data):
-    puzzle_size = len(puzzle_data)
-    row_set = [set() for _ in range(puzzle_size)]
-    col_set = [set() for _ in range(puzzle_size)]
-    sub_grid_set = [set() for _ in range(puzzle_size)]
-    for i, j in itertools.product(range(puzzle_size), range(puzzle_size)):
-        num = puzzle_data[i][j]
-        row_set[i].add(num)
-        col_set[j].add(num)
-        sub_grid_set[(i // int(math.sqrt(puzzle_size)))
-                     * int(math.sqrt(puzzle_size))
-                     + (j // int(math.ceil(math.sqrt(puzzle_size))))].add(num)
+# def test_generate_sets(puzzle_data):
+#     puzzle_size = len(puzzle_data)
+#     row_set = [set() for _ in range(puzzle_size)]
+#     col_set = [set() for _ in range(puzzle_size)]
+#     sub_grid_set = [set() for _ in range(puzzle_size)]
+#     for i, j in itertools.product(range(puzzle_size), range(puzzle_size)):
+#         num = puzzle_data[i][j]
+#         row_set[i].add(num)
+#         col_set[j].add(num)
+#         sub_grid_set[(i // int(math.sqrt(puzzle_size)))
+#                      * int(math.sqrt(puzzle_size))
+#                      + (j // int(math.ceil(math.sqrt(puzzle_size))))].add(num)
 
-    return row_set, col_set, sub_grid_set
+#     return row_set, col_set, sub_grid_set
 
 
 if __name__ == "__main__":
