@@ -14,6 +14,7 @@ btnFont = ("Californian FB", 15)
 class SudokuBoard:
 
     def __init__(self):
+        self.root = None
         self.puzzle_data = []
         self.size_data = 0
         self.row_set = None
@@ -23,9 +24,11 @@ class SudokuBoard:
 
         self.main_frame = None
         self.bottom_frame = None
+        self.timer_frame = None
         self.main_height = None
 
         self.clicked = None
+        self.brute_force_timer = None
 
         self.puzzle_solution_bf = None
         self.puzzle_solution_csp = None
@@ -34,6 +37,12 @@ class SudokuBoard:
         for widgets in self.main_frame.winfo_children():
             widgets.destroy()
             cells.clear()
+
+        if self.timer_frame is not None:
+            for widgets in self.timer_frame.winfo_children():
+                widgets.destroy()
+                cells.clear()
+
 
     def change_colour(self, colour):
         return "#ffffd0" if colour == "#D0ffff" else "#D0ffff"
@@ -82,7 +91,6 @@ class SudokuBoard:
     def draw_whole_grid(self, row, col, sub_row_num, sub_col_num, data):
         self.clear()
         colour = "#D0ffff"
-
         # add scroll bars to main frame when it shows a grid
         canvas = Canvas(self.main_frame, height=self.main_height, width=self.main_height)
         scrollbar_h = Scrollbar(self.main_frame, orient=HORIZONTAL, command=canvas.xview)
@@ -103,8 +111,16 @@ class SudokuBoard:
             if sub_row_num % 2 == 0:
                 colour = self.change_colour(colour)
 
+        if self.brute_force_timer is not None:
+            timer_text = f"Brute Force took {self.brute_force_timer:.5f} s."
+            self.timer_frame = Frame(self.root)
+            timer_label = Label(self.timer_frame, text=timer_text, font=("Arial", 24))
+            timer_label.pack(side=BOTTOM)
+            self.timer_frame.place(relx=0.5, y=self.main_height+100, anchor='s')
+
     def submit(self):
         self.bottom_frame.children['!button2'].configure(state="active")
+        self.bottom_frame.children['!button3'].configure(state="active")
         match self.clicked.get():
             case "9x9":
                 self.generate_board(9)
@@ -247,7 +263,9 @@ class SudokuBoard:
         solution = self.puzzle_solution_bf if mode == 'bf' else self.puzzle_solution_csp
         while time.time() < max_time:
             if solver.solve():
-                solution = solver.return_board()
+                solution = brute_force.return_board()
+                print(f"Brute Force took {time.time() - start} s") 
+                self.brute_force_timer = time.time() - start
                 self.draw_whole_grid(self.size_data, self.size_data, int(
                     math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)), solution)
                 break
@@ -255,26 +273,27 @@ class SudokuBoard:
                 self.display_message("This is an invalid board that has no solution.")
                 break
             if mode == 'bf' and brute_force.max_fail < brute_force.current_limit:
+                print("Increasing the depth from", brute_force.max_fail)
                 brute_force.increase_max_depth()
         else:
             self.display_message("Timer ran out. No solution found.")
 
     def main(self):
-        root = Tk()
-        root.geometry("900x900")
-        root.attributes('-fullscreen', True)
-        root.title("AI Sudoku Solver")
+        self.root = Tk()
+        self.root.geometry("900x900")
+        self.root.attributes('-fullscreen', True)
+        self.root.title("AI Sudoku Solver")
 
         self.clicked = StringVar()
 
-        self.main_frame = Frame(root)
-        self.main_height = root.winfo_screenheight() - root.winfo_screenheight() * 0.25
+        self.main_frame = Frame(self.root)
+        self.main_height = self.root.winfo_screenheight() - self.root.winfo_screenheight() * 0.25
         Label(self.main_frame, text="Welcome User", font=("Arial", 24)).grid(
             row=0, column=0, columnspan=5, ipady=10)
 
         self.main_frame.pack(side=TOP, pady=20)
 
-        self.bottom_frame = Frame(root)
+        self.bottom_frame = Frame(self.root)
 
         self.bottom_frame.pack(side=BOTTOM, pady=20)
         btn_create = Button(self.bottom_frame, text="Create Sudoku", font=btnFont,
@@ -283,11 +302,11 @@ class SudokuBoard:
 
         btn_solve_heuristic = Button(
             self.bottom_frame, text="Solve (heuristic)", font=btnFont, command=self.on_click_solve_brute_force,
-            width=15, height=2)
+            width=15, height=2, state="disabled")
         btn_solve_heuristic.grid(row=0, column=4)
 
         btn_solve_csp = Button(self.bottom_frame, text="Solve (CSP)", font=btnFont,
-                               command=self.on_click_solve_csp, width=15, height=2)
+                               command=self.on_click_solve_csp, width=15, height=2, state="disabled")
         btn_solve_csp.grid(row=0, column=8)
 
         btn_clear = Button(self.bottom_frame, text="Clear", font=btnFont, command=self.clear, width=15, height=2)
@@ -296,7 +315,7 @@ class SudokuBoard:
         btn_exit = Button(self.bottom_frame, text="Exit", font=btnFont, command=exit, width=15, height=2)
         btn_exit.grid(row=0, column=16)
 
-        root.mainloop()
+        self.root.mainloop()
 
 
 if __name__ == "__main__":

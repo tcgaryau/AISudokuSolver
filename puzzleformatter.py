@@ -1,25 +1,15 @@
 def main():
-    with open("test_16x16_board_1.txt", "r") as f:
+    with open("test_12x12_board_3.txt", "r") as f:
         puzzle_data = [line.strip() for line in f.readlines()]
 
     pline = ""
     for line in puzzle_data:
         for idx, char in enumerate(line.split(",")):
-            if idx % 16 == 0:
+            if idx % 12 == 0:
                 print(pline[:-1])
                 pline = ""
             pline += char + ","
-
-
-    # for idx, char in enumerate(puzzle_data):
-
-
-        # print(char)
-        # line += char
-        # if idx % 16 == 0:
-        #     print(line)
-        #     line = ""
-
+        print(pline[:-1])
 
 
 if __name__ == "__main__":
