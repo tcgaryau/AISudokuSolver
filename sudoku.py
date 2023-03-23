@@ -56,10 +56,13 @@ class SudokuBoard:
     def draw_sub_grid(self, row_num, col_num, sub_row_num, sub_col_num, bgcolour, draw_list):
         for item in draw_list:
             frame = Frame(item[0])
-            data = item[1][0]
-            title = "Title"
-            timer_text = "Timer text"
-            print(data)
+            solution_display = item[1]
+            puzzle_data = solution_display.puzzle_data
+            if solver_type := solution_display.solver_type:
+                solver_name = solver_type.value
+                title = f"{solver_name} Solver"
+                timer_text = f"{solver_name} took {solution_display.time_cost} seconds."
+                print(title, timer_text)
 
             # segment:use a canvas inside subframe
             # each square is at least of dimension 20
@@ -70,11 +73,6 @@ class SudokuBoard:
                             bg=bgcolour, bd=0, highlightthickness=0)
             canvas.pack(fill=BOTH, expand=False)
 
-            timer_frame = Frame(frame)
-            timer_label = Label(timer_frame, text=timer_text, font=("Arial", 24))
-            timer_label.pack(side=BOTTOM)
-
-
             for i in range(0, sub_row_num):
                 for j in range(0, sub_col_num):
                     sqrW = width / sub_col_num
@@ -83,9 +81,9 @@ class SudokuBoard:
                     y = i * sqrH
                     canvas.create_rectangle(
                         x, y, x + sqrW, y + sqrH, outline='black')
-                    if data:
-                        entry = data[i + row_num][j + col_num] if \
-                            data[i + row_num][
+                    if puzzle_data:
+                        entry = puzzle_data[i + row_num][j + col_num] if \
+                            puzzle_data[i + row_num][
                                 j + col_num] != 0 else ""
                         canvas.create_text(x + sqrW / 2, y + sqrH / 2,
                                            text=f"{entry}",
@@ -158,7 +156,7 @@ class SudokuBoard:
             draw_list = [[inner_frames[0], self.puzzle_solution_1], [inner_frames[1], self.puzzle_solution_2]]
         else:
             inner_frame = self.draw_canvas()
-            solution = self.puzzle_solution_1 or self.puzzle_solution_2 or (self.puzzle_data, "", None)
+            solution = self.puzzle_solution_1 or self.puzzle_solution_2 or SolutionDisplay(self.puzzle_data, "", None)
             draw_list = [[inner_frame, solution]]
 
         for row_num in range(0, row, sub_row_num):
@@ -317,8 +315,7 @@ class SudokuBoard:
         self.clear()
         self.toggle_button("!button3", False)
         csp = CSP(self.puzzle_data, self.row_set, self.col_set, self.sub_grid_set)
-        brute_force = BruteForce(self.puzzle_data, self.size_data, self.row_set, self.col_set, self.sub_grid_set)
-        self.solve_puzzle(brute_force, SolverType.BF)
+        self.solve_puzzle(csp, SolverType.CSP)
 
     def on_click_clear(self):
         self.clear()
@@ -337,7 +334,7 @@ class SudokuBoard:
             if solver.solve():
                 solved_puzzle = solver.return_board()
                 print(f"Brute Force took {time.time() - start} s")
-                solution = (solved_puzzle, time.time() - start, mode)
+                solution = SolutionDisplay(solved_puzzle, time.time() - start, mode)
 
                 if self.puzzle_solution_1:
                     self.puzzle_solution_2 = solution
@@ -387,7 +384,8 @@ class SudokuBoard:
                                command=self.on_click_solve_csp, width=15, height=2, state="disabled")
         btn_solve_csp.grid(row=0, column=8)
 
-        btn_clear = Button(self.bottom_frame, text="Clear", font=btnFont, command=self.on_click_clear, width=15, height=2)
+        btn_clear = Button(self.bottom_frame, text="Clear", font=btnFont, command=self.on_click_clear, width=15,
+                           height=2)
         btn_clear.grid(row=0, column=12)
 
         btn_exit = Button(self.bottom_frame, text="Exit", font=btnFont, command=exit, width=15, height=2)
@@ -399,6 +397,14 @@ class SudokuBoard:
 class SolverType(Enum):
     BF = "Brute Force"
     CSP = "CSP"
+
+
+class SolutionDisplay:
+
+    def __init__(self, puzzle_data, time_cost, solver_type):
+        self.puzzle_data = puzzle_data
+        self.time_cost = time_cost
+        self.solver_type = solver_type
 
 
 if __name__ == "__main__":
