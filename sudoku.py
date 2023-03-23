@@ -169,8 +169,8 @@ class SudokuBoard:
         #     self.timer_frame.place(relx=0.5, y=self.main_height+100, anchor='s')
 
     def submit(self):
-        self.bottom_frame.children['!button2'].configure(state="active")
-        self.bottom_frame.children['!button3'].configure(state="active")
+        self.toggle_button('!button2', True)
+        self.toggle_button('!button3', True)
         match self.clicked.get():
             case "9x9":
                 self.generate_board(9)
@@ -186,7 +186,7 @@ class SudokuBoard:
                 self.draw_whole_grid(25, 25, 5, 5)
             case "100x100":
                 self.generate_board(100)
-                self.bottom_frame.children['!button2'].configure(state="disabled")
+                self.toggle_button('!button2', False)
                 self.draw_whole_grid(100, 100, 10, 10)
             case "Select Options":
                 self.draw_whole_grid(self.size_data, self.size_data, int(
@@ -297,15 +297,18 @@ class SudokuBoard:
         self.clear()
         self.clear_data()
         self.drop_down_menu()
+        self.toggle_button("!button2", False)
+        self.toggle_button("!button3", False)
 
     def on_click_solve_brute_force(self):
         self.clear()
-        
+        self.toggle_button("!button2", False)
         brute_force = BruteForce(self.puzzle_data, self.size_data, self.row_set, self.col_set, self.sub_grid_set)
         self.solve_puzzle(brute_force, SolverType.BF)
 
     def on_click_solve_csp(self):
         self.clear()
+        self.toggle_button("!button3", False)
         csp = CSP(self.puzzle_data, self.row_set, self.col_set, self.sub_grid_set)
         brute_force = BruteForce(self.puzzle_data, self.size_data, self.row_set, self.col_set, self.sub_grid_set)
         self.solve_puzzle(brute_force, SolverType.BF)
@@ -313,6 +316,12 @@ class SudokuBoard:
     def on_click_clear(self):
         self.clear()
         self.clear_data()
+        self.toggle_button('!button2', False)
+        self.toggle_button('!button3', False)
+
+    def toggle_button(self, button_id, enable):
+        state = "active" if enable else "disabled"
+        self.bottom_frame.children[button_id].configure(state=state)
 
     def solve_puzzle(self, solver, mode):
         start = time.time()
