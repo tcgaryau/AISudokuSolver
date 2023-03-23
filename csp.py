@@ -151,12 +151,12 @@ class CSP:
                 self.unassigned.remove(next_empty)
 
                 # MAC using ac-3
-                result, revised_list = self.mac(next_empty)
-                if result:
+                is_inference, revised_list = self.mac(next_empty)
+                if is_inference:
                     if self.solve_csp():
                         return True
-                    for square, value in revised_list:
-                        square.domain.append(value)
+                for square, value in revised_list:
+                    square.domain.append(value)
 
                 # Remove the value from assignment
                 next_empty.domain = saved_values
@@ -237,12 +237,12 @@ class CSP:
         revised_list = []
         while len(arcs) > 0:
             arc = arcs.pop()
-            is_revised, revised_list = self.revise(arc, revised_list)
+            # is_revised, revised_list = self.revise(arc, revised_list)
 
-            if is_revised:
+            if self.revise(arc, revised_list):
                 if len(arc.square1.domain) == 0:
-                    print("Removed", len(revised_list), "values")
-                    print("failure from", arc.square1.row, arc.square1.col)
+                    # print("Removed", len(revised_list), "values")
+                    # print("failure from", arc.square1.row, arc.square1.col)
                     return False, revised_list
                 for neighbor in arc.square1.neighbors:
                     if neighbor is not arc.square2:
@@ -256,17 +256,17 @@ class CSP:
         :return: a boolean
         """
         if len(arc.square2.domain) > 1:
-            return False, revised_list
+            return False
 
         for x in arc.square1.domain:
             # Xi's domain = {1 2 3}, Xj's domain = {1}
             if x in arc.square2.domain:
-                print("X", x, "from square", arc.square1.row, arc.square1.col, "because square",
-                      arc.square2.row, arc.square2.col, "has domain", arc.square2.domain)
+                # print("X", x, "from square", arc.square1.row, arc.square1.col, "because square",
+                #       arc.square2.row, arc.square2.col, "has domain", arc.square2.domain)
                 arc.square1.domain.remove(x)
                 revised_list.append((arc.square1, x))
-                return True, revised_list
-        return False, revised_list
+                return True
+        return False
 
     def find_least_constraining_value(self, square):
         """
@@ -301,28 +301,28 @@ def test():
     #     [0, 0, 9, 0, 0, 0, 0, 8, 0],
     #     [0, 0, 6, 0, 0, 0, 0, 3, 9]
     # ]
-    # puzzle = [
-    #     [4, 0, 1, 0, 0, 0, 6, 0, 0],
-    #     [0, 9, 0, 3, 0, 6, 0, 5, 0],
-    #     [0, 0, 0, 0, 9, 0, 0, 0, 0],
-    #     [0, 2, 0, 0, 0, 0, 0, 0, 9],
-    #     [0, 0, 0, 1, 0, 9, 0, 0, 0],
-    #     [7, 0, 0, 0, 0, 0, 0, 0, 6],
-    #     [0, 0, 0, 0, 2, 0, 0, 0, 0],
-    #     [0, 8, 0, 5, 0, 7, 0, 6, 0],
-    #     [1, 0, 3, 0, 0, 0, 7, 0, 2]
-    # ]
     puzzle = [
-        [4, 1, 7, 3, 6, 9, 8, 0, 5],
-        [0, 3, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 7, 0, 0, 0, 0, 0],
-        [0, 2, 0, 0, 0, 0, 0, 6, 0],
-        [0, 0, 0, 0, 8, 0, 4, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0, 0],
-        [0, 0, 0, 6, 0, 3, 0, 7, 0],
-        [5, 0, 0, 2, 0, 0, 0, 0, 0],
-        [1, 0, 4, 0, 7, 5, 2, 9, 3],
+        [4, 0, 1, 0, 0, 0, 6, 0, 0],
+        [0, 9, 0, 3, 0, 6, 0, 5, 0],
+        [0, 0, 0, 0, 9, 0, 0, 0, 0],
+        [0, 2, 0, 0, 0, 0, 0, 0, 9],
+        [0, 0, 0, 1, 0, 9, 0, 0, 0],
+        [7, 0, 0, 0, 0, 0, 0, 0, 6],
+        [0, 0, 0, 0, 2, 0, 0, 0, 0],
+        [0, 8, 0, 5, 0, 7, 0, 6, 0],
+        [1, 0, 3, 0, 0, 0, 7, 0, 2]
     ]
+    # puzzle = [
+    #     [4, 1, 7, 3, 6, 9, 8, 0, 5],
+    #     [0, 3, 0, 0, 0, 0, 0, 0, 0],
+    #     [0, 0, 0, 7, 0, 0, 0, 0, 0],
+    #     [0, 2, 0, 0, 0, 0, 0, 6, 0],
+    #     [0, 0, 0, 0, 8, 0, 4, 0, 0],
+    #     [0, 0, 0, 0, 1, 0, 0, 0, 0],
+    #     [0, 0, 0, 6, 0, 3, 0, 7, 0],
+    #     [5, 0, 0, 2, 0, 0, 0, 0, 0],
+    #     [1, 0, 4, 0, 7, 5, 2, 9, 3],
+    # ]
     # puzzle = [
     #     [1, 4, 3, 7, 2, 8, 9, 5, 0],
     #     [9, 0, 0, 3, 0, 5, 0, 0, 1],
@@ -335,45 +335,58 @@ def test():
     #     [0, 0, 5, 0, 1, 0, 3, 0, 0]
     # ]
 
-    test_puzzle = [
-        [2, 6, 0, 0, 0, 3, 0, 1, 5],
-        [4, 7, 0, 0, 0, 0, 0, 0, 8],
-        [5, 8, 1, 0, 0, 4, 7, 6, 3],
-        [0, 3, 0, 4, 8, 9, 0, 7, 0],
-        [0, 0, 6, 0, 0, 2, 8, 3, 0],
-        [0, 0, 8, 3, 1, 0, 0, 0, 0],
-        [6, 9, 0, 0, 0, 8, 0, 0, 7],
-        [3, 0, 0, 0, 9, 0, 2, 0, 0],
-        [0, 1, 0, 5, 0, 0, 0, 9, 6]
-    ]
+    # test_puzzle = [
+    #     [2, 6, 0, 0, 0, 3, 0, 1, 5],
+    #     [4, 7, 0, 0, 0, 0, 0, 0, 8],
+    #     [5, 8, 1, 0, 0, 4, 7, 6, 3],
+    #     [0, 3, 0, 4, 8, 9, 0, 7, 0],
+    #     [0, 0, 6, 0, 0, 2, 8, 3, 0],
+    #     [0, 0, 8, 3, 1, 0, 0, 0, 0],
+    #     [6, 9, 0, 0, 0, 8, 0, 0, 7],
+    #     [3, 0, 0, 0, 9, 0, 2, 0, 0],
+    #     [0, 1, 0, 5, 0, 0, 0, 9, 6]
+    # ]
 
+    test_puzzle = [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ]
     # row_set, col_set, sub_grid_set = test_generate_sets(puzzle)
     import time
     now = time.time()
     # csp = CSP(puzzle, row_set, col_set, sub_grid_set)
-    csp = CSP(puzzle)
+    csp = CSP(test_puzzle)
     csp.init_board()
     csp.init_binary_constraints()
     print("Initial Board")
     for i in csp.board:
         for j in i:
             print(j.row, j.col, j.domain)
+
+    # preprocessing using ac3
     arcs = csp.init_constraints()
     csp.ac3(arcs)
 
-    print("After initial AC3 with all arcs")
-    for i in csp.board:
-        for j in i:
-            print(j.row, j.col, j.domain)
-    # start_time = time.time()
-    # if final_result := csp.solve_csp():
-    #     print(f"Solved in {time.time() - start_time} seconds")
-    # else:
-    #     print(f"Failed to solve in {time.time() - start_time} seconds")
-    # print("\nSolved Board")
+    # print("After initial AC3 with all arcs")
     # for i in csp.board:
     #     for j in i:
     #         print(j.row, j.col, j.domain)
+    start_time = time.time()
+    if final_result := csp.solve_csp():
+        print(f"Solved in {time.time() - start_time} seconds")
+    else:
+        print(f"Failed to solve in {time.time() - start_time} seconds")
+    print("\nSolved Board")
+    for i in csp.board:
+        for j in i:
+            print(j.row, j.col, j.domain)
 
 
 # def test_generate_sets(puzzle_data):
