@@ -314,7 +314,7 @@ class SudokuBoard:
     def on_click_solve_csp(self):
         self.clear()
         self.toggle_button("!button3", False)
-        csp = CSP(self.puzzle_data, self.row_set, self.col_set, self.sub_grid_set)
+        csp = CSP(self.puzzle_data)
         self.solve_puzzle(csp, SolverType.CSP)
 
     def on_click_clear(self):

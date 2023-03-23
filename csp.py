@@ -296,7 +296,8 @@ class CSP:
         """
         self.init_board()
         self.init_binary_constraints()
-        self.init_constraints()
+        arcs = self.init_constraints()
+        self.ac3(arcs)
         return self.solve_csp()
 
     def generate_puzzle_solution(self):
