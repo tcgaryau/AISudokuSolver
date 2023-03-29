@@ -1,6 +1,7 @@
 import math
 import copy
 import itertools
+import multiprocessing
 import time
 
 
@@ -132,6 +133,52 @@ class CSP:
                 if m + shift_row != row and n + shift_col != col:
                     neighbors.add(square)
             curr_square.neighbors = neighbors
+
+    def solve_csp_multiprocess(self):
+        """ CSP algorithms. """
+        import sys
+        sys.setrecursionlimit(10000)
+        # Return true if all squares have been assigned a value
+        if len(self.unassigned) == 0:
+            self.generate_puzzle_solution()
+            return True
+
+        next_empty = self.select_unassigned()
+        values = self.find_least_constraining_value(next_empty)
+        saved_values = copy.deepcopy(values)
+        with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+            starts = [(next_empty, v, saved_values) for v in saved_values]
+            print("Starting Length of starts: ", len(starts))
+            results = pool.starmap_async(self.solve_csp_mp_helper, starts).get(20)
+            # print(results)
+            for result in results:
+                if result:
+                    self.board = result[1]
+                    return True
+        print("Finished solving")
+
+
+    def solve_csp_mp_helper(self, target_cell, v, saved_values):
+
+        if self.is_consistent(target_cell, v):
+                # Add the value to assignment
+                target_cell.domain = [v]
+                target_cell.assigned = True
+                self.unassigned.remove(target_cell)
+
+                # MAC using ac-3
+                is_inference, revised_list = self.mac(target_cell)
+                if is_inference:
+                    if self.solve_csp():
+                        return True, self.board
+                for square, value in revised_list:
+                    square.domain.append(value)
+
+                # Remove the value from assignment
+                target_cell.domain = saved_values
+                target_cell.assigned = False
+                self.unassigned.add(target_cell)
+        return False
 
     def solve_csp(self):
         """ CSP algorithms. """
@@ -419,18 +466,41 @@ def test():
                       [8, 0, 0, 10, 1, 13, 0, 0, 0, 4, 0, 0, 0, 2, 3, 0],
                       [14, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0]]
 
-    twenty_five_puzzle = [[0, 3, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 8, 0, 0, 0, 0, 0], [21, 0, 0, 14, 8, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 0], [25, 0, 0, 0, 0, 4, 0, 9, 0, 13, 8, 0, 6, 0, 0, 18, 0, 0, 0, 0, 14, 19, 0, 10, 0], [0, 0, 9, 6, 0, 0, 0, 17, 10, 0, 0, 0, 0, 0, 0,
-                                                                                                                                                                                                                                                                              0, 0, 0, 0, 0, 18, 0, 2, 24, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 16, 4], [0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 23, 0, 2, 10], [0, 0, 0, 0, 0, 0, 7, 0, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 3, 0, 0, 6, 0], [0, 0, 16, 0, 0, 12,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 14, 10, 0, 22, 0, 6, 25, 0, 0, 23, 0, 0, 0, 17, 18, 0, 0, 0, 0, 0, 0], [0, 0, 0, 10, 6, 16, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 13, 18, 17], [2, 0, 0, 0, 0, 0, 25, 8, 0, 0, 0, 21, 0, 3, 0, 0, 0, 0, 0, 0, 0,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 19, 24], [0, 0, 23, 0, 0, 0, 0, 0, 5, 0, 9, 2, 0, 24, 11, 0, 22, 7, 0, 0, 0, 12, 0, 0, 0], [0, 7, 11, 0, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 16, 6, 0, 3, 0, 0, 0, 0, 0], [0, 0, 0, 0, 20, 0, 22, 3, 0, 0, 6, 0, 16, 0, 0, 0, 0, 0, 2, 17, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 10, 25, 24, 11, 20, 0, 3, 0, 0], [23, 0, 0, 0, 0, 0,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    0, 16, 0, 0, 0, 0, 13, 0, 0, 0, 14, 0, 0, 7, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 14, 0, 0, 0, 0, 20, 0, 0, 0, 0, 9, 0, 0, 0, 0], [16, 0, 0, 0, 0, 13, 0, 0, 25, 17, 5, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21], [12, 0, 0, 8, 0, 7, 0, 4, 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    0, 0, 0], [0, 0, 20, 0, 0, 0, 0, 15, 0, 0, 24, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 7, 0, 0], [0, 22, 24, 0, 7, 5, 21, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 4, 0, 0], [0, 0, 0, 0, 15, 0, 0, 0, 7, 18, 0, 22, 0, 4, 16, 0, 0, 8, 0, 0, 0, 0, 0, 23, 0], [6, 0, 0, 0, 0, 0, 16, 0, 19, 0, 0, 0, 25, 0, 0, 0, 0, 0, 4, 0, 0, 0, 14, 0, 0], [0, 0, 0, 9, 12, 3, 0, 0, 0, 0, 13, 8, 23, 14, 17, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0]]
+    twenty_five_puzzle = [
+        [0, 3, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 8, 0, 0, 0, 0, 0],
+        [21, 0, 0, 14, 8, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 0],
+        [25, 0, 0, 0, 0, 4, 0, 9, 0, 13, 8, 0, 6, 0, 0, 18, 0, 0, 0, 0, 14, 19, 0, 10, 0],
+        [0, 0, 9, 6, 0, 0, 0, 17, 10, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 18, 0, 2, 24, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 16, 4],
+        [0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 23, 0, 2, 10],
+        [0, 0, 0, 0, 0, 0, 7, 0, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 3, 0, 0, 6, 0],
+        [0, 0, 16, 0, 0, 12,
+         0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 14, 10, 0, 22, 0, 6, 25, 0, 0, 23, 0, 0, 0, 17, 18, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 10, 6, 16, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 13, 18, 17],
+        [2, 0, 0, 0, 0, 0, 25, 8, 0, 0, 0, 21, 0, 3, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 19, 24],
+        [0, 0, 23, 0, 0, 0, 0, 0, 5, 0, 9, 2, 0, 24, 11, 0, 22, 7, 0, 0, 0, 12, 0, 0, 0],
+        [0, 7, 11, 0, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 16, 6, 0, 3, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 20, 0, 22, 3, 0, 0, 6, 0, 16, 0, 0, 0, 0, 0, 2, 17, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 10, 25, 24, 11, 20, 0, 3, 0, 0],
+        [23, 0, 0, 0, 0, 0,
+         0, 16, 0, 0, 0, 0, 13, 0, 0, 0, 14, 0, 0, 7, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 14, 0, 0, 0, 0, 20, 0, 0, 0, 0, 9, 0, 0, 0, 0],
+        [16, 0, 0, 0, 0, 13, 0, 0, 25, 17, 5, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21],
+        [12, 0, 0, 8, 0, 7, 0, 4, 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0], [0, 0, 20, 0, 0, 0, 0, 15, 0, 0, 24, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 7, 0, 0],
+        [0, 22, 24, 0, 7, 5, 21, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 4, 0, 0],
+        [0, 0, 0, 0, 15, 0, 0, 0, 7, 18, 0, 22, 0, 4, 16, 0, 0, 8, 0, 0, 0, 0, 0, 23, 0],
+        [6, 0, 0, 0, 0, 0, 16, 0, 19, 0, 0, 0, 25, 0, 0, 0, 0, 0, 4, 0, 0, 0, 14, 0, 0],
+        [0, 0, 0, 9, 12, 3, 0, 0, 0, 0, 13, 8, 23, 14, 17, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0]]
     empty_twenty_five_puzzle = [[0 for _ in range(25)] for _ in range(25)]
     # row_set, col_set, sub_grid_set = test_generate_sets(puzzle)
     import time
     now = time.time()
     # csp = CSP(puzzle, row_set, col_set, sub_grid_set)
-    csp = CSP(invalid_puzzle)
+    csp = CSP(sixteen_puzzle)
     csp.init_board()
     csp.init_binary_constraints()
     print("Initial Board")
@@ -447,7 +517,8 @@ def test():
         for j in i:
             print(j.row, j.col, j.domain)
     start_time = time.time()
-    if final_result := csp.solve_csp():
+    # if final_result := csp.solve_csp():
+    if final_result := csp.solve_csp_multiprocess():
         print(f"Solved in {time.time() - start_time} seconds")
     else:
         print(f"Failed to solve in {time.time() - start_time} seconds")
