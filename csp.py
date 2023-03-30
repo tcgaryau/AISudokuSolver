@@ -148,39 +148,39 @@ class CSP:
         saved_values = copy.deepcopy(values)
         with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
             def quit_process(args):
+                print(args)
                 if args[0][0]:
                     self.board = args[0][1]
                     pool.terminate()
 
             starts = [(next_empty, v, saved_values) for v in saved_values]
             print("Starting Length of starts: ", len(starts))
-            pool.starmap_async(self.solve_csp_mp_helper, starts, callback=quit_process).get(300)
-
-        print("Finished solving")
-
-
-
+            results = pool.starmap_async(self.solve_csp_mp_helper, starts,
+                                         callback=quit_process).get(300)
+        if self.solve_csp():
+            print("Finished solving")
+            return True
 
     def solve_csp_mp_helper(self, target_cell, v, saved_values):
 
         if self.is_consistent(target_cell, v):
-                # Add the value to assignment
-                target_cell.domain = [v]
-                target_cell.assigned = True
-                self.unassigned.remove(target_cell)
+            # Add the value to assignment
+            target_cell.domain = [v]
+            target_cell.assigned = True
+            self.unassigned.remove(target_cell)
 
-                # MAC using ac-3
-                is_inference, revised_list = self.mac(target_cell)
-                if is_inference:
-                    if self.solve_csp():
-                        return True, self.board
-                for square, value in revised_list:
-                    square.domain.append(value)
+            # MAC using ac-3
+            is_inference, revised_list = self.mac(target_cell)
+            if is_inference:
+                if self.solve_csp():
+                    return True, self.board
+            for square, value in revised_list:
+                square.domain.append(value)
 
-                # Remove the value from assignment
-                target_cell.domain = saved_values
-                target_cell.assigned = False
-                self.unassigned.add(target_cell)
+            # Remove the value from assignment
+            target_cell.domain = saved_values
+            target_cell.assigned = False
+            self.unassigned.add(target_cell)
         return False
 
     def solve_csp(self):
@@ -348,7 +348,8 @@ class CSP:
         self.init_binary_constraints()
         arcs = self.init_constraints()
         self.ac3(arcs)
-        return self.solve_csp()
+        # return self.solve_csp()
+        return self.solve_csp_multiprocess()
 
     def generate_puzzle_solution(self):
         """ Generate puzzle data from a Board. """
