@@ -16,6 +16,7 @@ btnFont = ("Californian FB", 15)
 class SudokuBoard:
 
     def __init__(self):
+        self.timer_frame_2 = None
         self.root = None
         self.puzzle_data = []
         self.size_data = 0
@@ -31,22 +32,32 @@ class SudokuBoard:
 
         self.clicked = None
         self.brute_force_timer = None
+        self.csp_timer = None
 
         self.puzzle_solution_1 = None
         self.puzzle_solution_2 = None
 
     def clear(self):
-        for widgets in self.main_frame.winfo_children():
-            widgets.destroy()
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
             cells.clear()
 
         if self.timer_frame is not None:
-            for widgets in self.timer_frame.winfo_children():
-                widgets.destroy()
+            for widget in self.timer_frame.winfo_children():
+                widget.destroy()
                 cells.clear()
+            self.timer_frame = None
+
+        if self.timer_frame_2 is not None:
+            for widget in self.timer_frame_2.winfo_children():
+                widget.destroy()
+                cells.clear()
+            self.timer_frame_2 = None
 
     def clear_data(self):
         self.puzzle_data = []
+        self.brute_force_timer = None
+        self.csp_timer = None
         self.puzzle_solution_1 = None
         self.puzzle_solution_2 = None
 
@@ -58,9 +69,9 @@ class SudokuBoard:
             frame = Frame(item[0])
             solution_display = item[1]
             puzzle_data = solution_display.puzzle_data
-            if solver_type := solution_display.solver_type:
-                timer_text = f"{solver_type.value} took {solution_display.time_cost} seconds."
-                print(timer_text)
+            # if solver_type := solution_display.solver_type:
+            #     timer_text = f"{solver_type.value} took {solution_display.time_cost} seconds."
+            #     print(timer_text)
 
             # segment:use a canvas inside subframe
             # each square is at least of dimension 20
@@ -177,12 +188,25 @@ class SudokuBoard:
             if sub_row_num % 2 == 0:
                 colour = self.change_colour(colour)
 
-        # if self.brute_force_timer is not None:
-        #     timer_text = f"Brute Force took {self.brute_force_timer:.5f} s."
-        #     self.timer_frame = Frame(self.root)
-        #     timer_label = Label(self.timer_frame, text=timer_text, font=("Arial", 24))
-        #     timer_label.pack(side=BOTTOM)
-        #     self.timer_frame.place(relx=0.5, y=self.main_height+100, anchor='s')
+        if self.brute_force_timer is not None:
+            timer_text = f"Brute Force took {self.brute_force_timer:.5f} s."
+            self.timer_frame = Frame(self.root)
+            timer_label = Label(self.timer_frame, text=timer_text, font=("Arial", 24))
+            timer_label.pack(side=BOTTOM)
+            relx = 0.5
+            if self.brute_force_timer and self.csp_timer:
+                relx= 0.3
+            self.timer_frame.place(relx=relx, y=self.main_height+100, anchor='s')
+
+        if self.csp_timer is not None:
+            timer_text = f"CSP took {self.csp_timer:.5f} s."
+            self.timer_frame_2 = Frame(self.root)
+            timer_label = Label(self.timer_frame_2, text=timer_text, font=("Arial", 24))
+            timer_label.pack(side=BOTTOM)
+            relx = 0.5
+            if self.brute_force_timer and self.csp_timer:
+                relx= 0.7
+            self.timer_frame_2.place(relx=relx, y=self.main_height+100, anchor='s')
 
     def submit(self):
         self.toggle_button('!button2', True)
@@ -312,8 +336,8 @@ class SudokuBoard:
             row=0, column=0, columnspan=5)
 
     def create_sudoku(self):
-        self.clear()
         self.clear_data()
+        self.clear()
         self.drop_down_menu()
         self.toggle_button("!button2", False)
         self.toggle_button("!button3", False)
@@ -347,7 +371,14 @@ class SudokuBoard:
         while time.time() < max_time:
             if solver.solve():
                 solved_puzzle = solver.return_board()
-                print(f"Brute Force took {time.time() - start} s")
+
+                if mode == SolverType.BF:
+                    self.brute_force_timer = time.time() - start
+                    print(f"BF took {self.brute_force_timer} s")
+                else:
+                    self.csp_timer = time.time() - start
+                    print(f"CSP took {self.csp_timer} s")
+
                 solution = SolutionDisplay(
                     solved_puzzle, time.time() - start, mode)
 
