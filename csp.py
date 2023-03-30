@@ -137,7 +137,7 @@ class CSP:
     def solve_csp_multiprocess(self):
         """ CSP algorithms. """
         import sys
-        sys.setrecursionlimit(10000)
+        sys.setrecursionlimit(10000000)
         # Return true if all squares have been assigned a value
         if len(self.unassigned) == 0:
             self.generate_puzzle_solution()
@@ -147,15 +147,18 @@ class CSP:
         values = self.find_least_constraining_value(next_empty)
         saved_values = copy.deepcopy(values)
         with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+            def quit_process(args):
+                if args[0][0]:
+                    self.board = args[0][1]
+                    pool.terminate()
+
             starts = [(next_empty, v, saved_values) for v in saved_values]
             print("Starting Length of starts: ", len(starts))
-            results = pool.starmap_async(self.solve_csp_mp_helper, starts).get(20)
-            # print(results)
-            for result in results:
-                if result:
-                    self.board = result[1]
-                    return True
+            pool.starmap_async(self.solve_csp_mp_helper, starts, callback=quit_process).get(300)
+
         print("Finished solving")
+
+
 
 
     def solve_csp_mp_helper(self, target_cell, v, saved_values):
