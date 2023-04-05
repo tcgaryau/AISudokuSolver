@@ -152,19 +152,21 @@ class CSP:
                 if args[0][0]:
                     self.board = args[0][1]
                     print("QUITTING")
-                    for i in self.board:
-                        for j in i:
-                            print(j.row, j.col, j.domain)
                     pool.terminate()
+                else:
+                    print("Fail")
 
             starts = [(next_empty, v, saved_values) for v in saved_values]
             print("Starting Length of starts: ", len(starts))
             results = pool.starmap_async(self.solve_csp_mp_helper, starts,
-                                         callback=quit_process).get(300)
+                                         callback=quit_process, chunksize=1)
+            value = results.get()
+            print(value)
+        return True
 
-        if self.solve_csp():
-            print("Finished solving")
-            return True
+        # if self.solve_csp():
+        #     print("Finished solving")
+        #     return True
 
     def solve_csp_mp_helper(self, target_cell, v, saved_values):
 
@@ -276,14 +278,11 @@ class CSP:
         Maintaining Arc Consistency using AC-3 algorithm.
         :param square: a Square
         """
-        arcs = set()
-        # We start with only the arcs (Xj, Xi) for all Xj that are unassigned variables that are neighbors of Xi
-        for neighbor in square.neighbors:
-
-            # if not neighbor.assigned:
-            if not self.board[neighbor[0]][neighbor[1]].assigned:
-                arcs.add(Arc(neighbor[0], neighbor[1], square.row, square.col))
-
+        arcs = {
+            Arc(neighbor[0], neighbor[1], square.row, square.col)
+            for neighbor in square.neighbors
+            if not self.board[neighbor[0]][neighbor[1]].assigned
+        }
         return self.ac3(arcs)
 
     def ac3(self, arcs):
@@ -295,15 +294,10 @@ class CSP:
         revised_list = []
         while len(arcs) > 0:
             arc = arcs.pop()
-            # is_revised, revised_list = self.revise(arc, revised_list)
 
             if self.revise(arc, revised_list):
-                # if len(arc.square1.domain) == 0:
                 if len(self.board[arc.square1_x][arc.square1_y].domain) == 0:
-                    # print("Removed", len(revised_list), "values")
-                    # print("failure from", arc.square1.row, arc.square1.col)
                     return False, revised_list
-                # for neighbor in arc.square1.neighbors:
                 for neighbor in self.board[arc.square1_x][arc.square1_y].neighbors:
                     if neighbor is not (arc.square2_x, arc.square2_y):
                         arcs.add(Arc(neighbor[0], neighbor[1], arc.square1_x, arc.square1_y))
@@ -317,17 +311,10 @@ class CSP:
         """
         if len(self.board[arc.square2_x][arc.square2_y].domain) > 1:
             return False
-        # if len(arc.square2.domain) > 1:
-        #     return False
 
-        # for x in arc.square1.domain: #changed
         for x in self.board[arc.square1_x][arc.square1_y].domain:
-            # Xi's domain = {1 2 3}, Xj's domain = {1}
             if x in self.board[arc.square2_x][arc.square2_y].domain:
-                # print("X", x, "from square", arc.square1.row, arc.square1.col, "because square",
-                #       arc.square2.row, arc.square2.col, "has domain", arc.square2.domain)
                 self.board[arc.square1_x][arc.square1_y].domain.remove(x)
-                # arc.square1.domain.remove(x)
                 revised_list.append((arc.square1_x, arc.square1_y, x))
                 return True
         return False
@@ -501,9 +488,8 @@ def test():
     empty_twenty_five_puzzle = [[0 for _ in range(25)] for _ in range(25)]
     # row_set, col_set, sub_grid_set = test_generate_sets(puzzle)
     import time
-    now = time.time()
     # csp = CSP(puzzle, row_set, col_set, sub_grid_set)
-    csp = CSP(hard_puzzle)
+    csp = CSP(test_puzzle)
     csp.init_board()
     csp.init_binary_constraints()
     print("Initial Board")
