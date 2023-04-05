@@ -3,6 +3,7 @@ import copy
 import itertools
 import multiprocessing
 import functools
+from typing import Set, List, Tuple
 
 
 class Square:
@@ -17,7 +18,10 @@ class Square:
         self.col = col
         self.assigned = assigned
         self.domain = domain
-        self.neighbors = None
+        self.neighbors = set()
+        self.row_neighbors = set()
+        self.col_neighbors = set()
+        self.sg_neighbors = set()
         # TODO: add a subgrid store
 
     def __str__(self):
@@ -42,7 +46,7 @@ class CSP:
         self.puzzle_data = copy.deepcopy(puzzle_data)
         self.size_data = len(puzzle_data)
         self.board = None
-        self.unassigned = set()
+        self.unassigned: Set[Square] = set()
 
     def init_board(self):
         """ Initialize a sudoku board as a 2D array of Squares, and the domain of each square. """
@@ -93,29 +97,32 @@ class CSP:
         sg_col_total = int(math.ceil(math.sqrt(size)))
 
         for i, j in itertools.product(range(size), range(size)):
-            curr_square = board[i][j]
+            curr_square: Square = board[i][j]
             # for curr_square in self.unassigned:
             row = curr_square.row
             col = curr_square.col
-            neighbors = set()
 
             for n in range(size):
                 square = board[row][n]
                 if n != col:
-                    neighbors.add((square.row, square.col))
+                    curr_square.neighbors.add((square.row, square.col))
+                    curr_square.col_neighbors.add((square.row, square.col))
 
             for m in range(size):
                 square = board[m][col]
                 if m != row:
-                    neighbors.add((square.row, square.col))
+                    curr_square.neighbors.add((square.row, square.col))
+                    curr_square.row_neighbors.add((square.row, square.col))
 
             shift_row = row // sg_row_total * sg_row_total
             shift_col = col // sg_col_total * sg_col_total
             for m, n in itertools.product(range(sg_row_total), range(sg_col_total)):
                 square = board[m + shift_row][n + shift_col]
                 if m + shift_row != row and n + shift_col != col:
-                    neighbors.add((square.row, square.col))
-            curr_square.neighbors = neighbors
+                    curr_square.neighbors.add((square.row, square.col))
+                    curr_square.sg_neighbors.add((square.row, square.col))
+            # curr_square.neighbors = set(list(curr_square.row_neighbors) + list(curr_square.col_neighbors)
+            #                             + list(curr_square.sg_neighbors))
 
     def solve_csp_multiprocess(self):
         """ CSP algorithms. """
@@ -569,7 +576,32 @@ def test():
                   [],
                   [],
                   []]
-
+    # 25x25
+    grp1_25x25_1 = [[0, 0, 1, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 13],
+                    [17, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 21, 0, 23, 2, 0, 0, 0, 0, 0, 6, 0, 7, 0, 0],
+                    [0, 0, 4, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 1, 17, 0, 0, 6, 0, 0, 0, 2, 0, 0, 5],
+                    [0, 0, 0, 23, 0, 17, 0, 0, 0, 0, 5, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 3, 10, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 8, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 4, 0],
+                    [0, 17, 18, 0, 0, 0, 0, 0, 0, 3, 23, 0, 21, 0, 0, 0, 0, 10, 0, 0, 16, 7, 0, 0, 0],
+                    [0, 0, 0, 0, 9, 14, 0, 0, 10, 0, 0, 0, 0, 0, 0, 13, 23, 0, 20, 0, 0, 0, 0, 0, 0],
+                    [10, 3, 0, 0, 1, 0, 0, 0, 24, 0, 0, 0, 19, 8, 4, 0, 0, 0, 0, 0, 0, 14, 0, 20, 0],
+                    [11, 0, 0, 14, 4, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 20, 19, 0, 0, 0, 0, 0, 22, 5, 0, 14, 0, 21, 0, 0, 12, 0, 0, 10, 0, 3, 15],
+                    [0, 0, 17, 0, 0, 12, 0, 3, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 12, 17, 0, 5, 13, 0, 1, 0, 0, 0, 0],
+                    [0, 0, 3, 1, 0, 0, 0, 0, 5, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 20],
+                    [14, 12, 13, 4, 0, 0, 15, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 22, 0, 0, 0, 0, 2],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 18, 0, 0, 0, 16, 0, 0, 0, 0, 24, 0, 9, 15, 10, 0],
+                    [0, 0, 0, 0, 0, 23, 5, 0, 16, 0, 19, 8, 0, 0, 0, 0, 0, 9, 2, 0, 0, 0, 12, 13, 14],
+                    [0, 0, 0, 0, 0, 0, 22, 0, 0, 9, 21, 0, 0, 20, 0, 0, 0, 0, 0, 0, 11, 0, 0, 19, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 9, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 18],
+                    [19, 0, 0, 8, 23, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 10, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 5, 17, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 17, 0, 3, 0, 0, 0, 0, 20, 0, 0, 23, 14, 0, 0, 0, 8, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 8, 0, 0, 0, 10, 0, 25, 0, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 0, 0, 12],
+                    [0, 0, 0, 0, 0, 0, 21, 0, 15, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 6, 18, 5, 0, 0, 0],
+                    [23, 0, 0, 0, 0, 0, 0, 11, 0, 1, 0, 18, 0, 0, 0, 4, 7, 12, 24, 0, 0, 25, 0, 0, 9]]
     # 16x16
     grp1_16x16_1 = [[0, 8, 16, 0, 9, 0, 0, 0, 5, 0, 7, 0, 0, 0, 0, 12],
                     [6, 0, 0, 0, 5, 0, 0, 0, 0, 14, 0, 0, 0, 4, 16, 0],
