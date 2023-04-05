@@ -2,6 +2,7 @@ import math
 import copy
 import itertools
 import multiprocessing
+import functools
 import time
 
 
@@ -159,9 +160,19 @@ class CSP:
 
             starts = [(next_empty, v, saved_values) for v in saved_values]
             print("Starting Length of starts: ", len(starts))
-            results = pool.starmap_async(self.solve_csp_mp_helper, starts,
-                               callback=quit_process, chunksize=1)
-            results.wait()
+
+            # using starmap_async (original)
+            # results = pool.starmap_async(self.solve_csp_mp_helper, starts,
+            #                    callback=quit_process, chunksize=1)
+            # results.wait()
+
+            #using imap_unordered
+            for results in pool.imap_unordered(functools.partial(self.solve_csp_mp_helper, next_empty, saved_values=saved_values), values, chunksize=1):
+                if results:
+                    self.board = results[1]
+                    pool.terminate()
+                    return True
+
         return True
 
         # if self.solve_csp():
