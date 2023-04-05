@@ -139,6 +139,7 @@ class CSP:
         """ CSP algorithms. """
         import sys
         sys.setrecursionlimit(10000000)
+
         # Return true if all squares have been assigned a value
         if len(self.unassigned) == 0:
             self.generate_puzzle_solution()
@@ -147,21 +148,20 @@ class CSP:
         next_empty = self.select_unassigned()
         values = self.find_least_constraining_value(next_empty)
         saved_values = copy.deepcopy(values)
+
         with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
             def quit_process(args):
-                if args[0][0]:
-                    self.board = args[0][1]
-                    print("QUITTING")
-                    pool.terminate()
-                else:
-                    print("Fail")
+                for arg in args:
+                    if isinstance(arg, tuple):
+                        self.board = arg[1]
+                        pool.terminate()
+                        return True
 
             starts = [(next_empty, v, saved_values) for v in saved_values]
             print("Starting Length of starts: ", len(starts))
             results = pool.starmap_async(self.solve_csp_mp_helper, starts,
-                                         callback=quit_process, chunksize=1)
-            value = results.get()
-            print(value)
+                               callback=quit_process, chunksize=1)
+            results.wait()
         return True
 
         # if self.solve_csp():
@@ -288,7 +288,7 @@ class CSP:
     def ac3(self, arcs):
         """
         Check if the domain of a square is consistent with its neighbors.
-        :param square: a Square
+        :param arcs: a set of Arcs
         :return: a boolean
         """
         revised_list = []
@@ -329,7 +329,8 @@ class CSP:
         neighbour_frequency = {val: 0 for val in current_domain}
 
         for val in current_domain:
-            for neighbour in [neighbor for neighbor in square.neighbors if not self.board[neighbor[0]][neighbor[1]].assigned]:
+            for neighbour in [neighbor for neighbor in square.neighbors if
+                              not self.board[neighbor[0]][neighbor[1]].assigned]:
                 if val in self.board[neighbour[0]][neighbour[1]].domain:
                     neighbour_frequency[val] += 1
 
@@ -416,7 +417,6 @@ def test():
         [3, 0, 0, 0, 9, 0, 2, 0, 0],
         [0, 1, 0, 5, 0, 0, 0, 9, 6]
     ]
-
     invalid_puzzle = [
         [3, 6, 9, 0, 8, 4, 1, 5, 7],
         [1, 5, 8, 2, 9, 7, 0, 6, 4],
@@ -438,7 +438,6 @@ def test():
                    [5, 0, 0, 2, 0, 0, 0, 0, 0],
                    [1, 0, 4, 0, 0, 0, 0, 0, 0],
                    ]
-
     sixteen_puzzle = [[0, 4, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 10, 0, 0, 0],
                       [1, 7, 0, 6, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0],
                       [0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0, 3, 11, 9, 0],
@@ -455,7 +454,22 @@ def test():
                       [0, 0, 0, 0, 12, 8, 0, 0, 16, 0, 0, 0, 0, 6, 0, 0],
                       [8, 0, 0, 10, 1, 13, 0, 0, 0, 4, 0, 0, 0, 2, 3, 0],
                       [14, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0]]
-
+    sixteen_puzzle_1 = [[0, 8, 16, 0, 9, 0, 0, 0, 5, 0, 7, 0, 0, 0, 0, 12],
+                        [6, 0, 0, 0, 5, 0, 0, 0, 0, 14, 0, 0, 0, 4, 16, 0],
+                        [0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 15, 12, 0, 6, 0, 0],
+                        [0, 0, 0, 4, 11, 15, 0, 0, 0, 0, 0, 6, 8, 0, 0, 0],
+                        [0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0],
+                        [0, 0, 10, 0, 0, 14, 0, 0, 7, 0, 0, 0, 0, 1, 0, 0],
+                        [0, 0, 5, 0, 0, 6, 0, 2, 0, 0, 3, 0, 0, 0, 4, 7],
+                        [2, 0, 4, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 16, 0, 12, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0],
+                        [0, 0, 9, 0, 0, 0, 16, 13, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 16, 0, 12, 8, 0, 0],
+                        [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 2, 0, 4, 0, 0, 0],
+                        [0, 0, 0, 9, 4, 1, 0, 0, 13, 0, 0, 0, 0, 7, 0, 0],
+                        [0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0, 9, 0, 0],
+                        [0, 0, 15, 2, 0, 0, 0, 5, 0, 0, 0, 0, 3, 0, 8, 13]]
     twenty_five_puzzle = [
         [0, 3, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 8, 0, 0, 0, 0, 0],
         [21, 0, 0, 14, 8, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 0],
@@ -489,7 +503,7 @@ def test():
     # row_set, col_set, sub_grid_set = test_generate_sets(puzzle)
     import time
     # csp = CSP(puzzle, row_set, col_set, sub_grid_set)
-    csp = CSP(test_puzzle)
+    csp = CSP(hard_puzzle)
     csp.init_board()
     csp.init_binary_constraints()
     print("Initial Board")
@@ -506,8 +520,7 @@ def test():
         for j in i:
             print(j.row, j.col, j.domain)
     start_time = time.time()
-    # if final_result := csp.solve_csp():
-    if final_result := csp.solve_csp_multiprocess():
+    if csp.solve_csp_multiprocess():
         print(f"Solved in {time.time() - start_time} seconds")
     else:
         print(f"Failed to solve in {time.time() - start_time} seconds")
