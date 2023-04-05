@@ -47,10 +47,9 @@ class CSP:
     def init_board(self):
         """ Initialize a sudoku board as a 2D array of Squares, and the domain of each square. """
         size = self.size_data
-        puzzle = self.puzzle_data
         board = [[None for _ in range(size)] for _ in range(size)]
         for i, j in itertools.product(range(size), range(size)):
-            value = puzzle[i][j]
+            value = self.puzzle_data[i][j]
             if value == 0:
                 # domain = list(self._get_consistent_values(i, j))
                 domain = list(range(1, size + 1))
