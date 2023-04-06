@@ -1499,7 +1499,9 @@ def main():
     all_9x9 = [grp1_9x9_1, grp1_9x9_2, grp1_9x9_3, grp2_9x9_1, grp2_9x9_2, grp2_9x9_3, grp3_9x9_1, grp3_9x9_2,
                grp3_9x9_3, grp4_9x9_1, grp4_9x9_2, grp4_9x9_3, grp5_9x9_1, grp5_9x9_2, grp5_9x9_3]
 
-    restart_16 = [grp1_25x25_1]
+
+    the_good_ones = [grp1_25x25_1, grp3_25x25_2, grp3_25x25_3]
+    restart_16 = the_good_ones
     # for sets in all_puzzles:
     for i, puzzle in enumerate(restart_16):
         csp = CSP(puzzle)
@@ -1512,7 +1514,7 @@ def main():
         #         print(j.row, j.col, j.domain)
 
         # preprocessing using ac3
-        arcs = csp.init_constraints()
+        arcs = csp.init_arc_constraints()
         csp.ac3(arcs)
 
         # print("After initial AC3 with all arcs")
@@ -1527,7 +1529,7 @@ def main():
             print(
                 f"Failed to solve in {time.perf_counter() - start_time} seconds")
         print("\nSolved Board")
-        print("\n-----------------------------------------------------------------------------------------------------")
+        print("\n------------------------------------------------------------------------------------------------------------------------")
 
         for i in range(csp.size_data):
             for j in range(csp.size_data):
@@ -1538,7 +1540,7 @@ def main():
                 if (j + 1) % 5 == 0:
                     print("|", end="\t")
             if (i + 1) % 5 == 0:
-                print("\n----------------------------------------------------------------------------------------------", end=" ")
+                print("\n------------------------------------------------------------------------------------------------------------------------", end=" ")
             print()
 
 

@@ -20,7 +20,7 @@ class BruteForce:
     def solve(self, is_first=True) -> bool:
         """
         Brute force depth - first searching algorithm.
-        In each node, find a valid number to fill the most top-left empty square.
+        In each node, find a valid number to empty square with the least number of options.
         A solution is found if every square on the board is filled.
         :return: if a solution is found
         """

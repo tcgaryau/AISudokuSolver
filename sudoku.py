@@ -284,11 +284,18 @@ class SudokuBoard:
 
         # Change label contents
         label_file_explorer.configure(text=f"File Opened: {filename}")
+        file_extension = filename.split(".")[-1]
+        if file_extension != "txt":
+            self.clear()
+            self.display_message("Your file extension must be txt. Please try again.")
+            return
 
         with open(filename, "r") as f:
             file_data = f.read().strip()
             if self.validate_file_contents(file_data):
                 self.puzzle_data, self.size_data = self.parse_input_file(file_data)
+            self.validate_file_contents(file_data)
+            self.puzzle_data, self.size_data = self.parse_input_file(file_data)
 
     def validate_file_contents(self, file_data):
 
@@ -305,7 +312,6 @@ class SudokuBoard:
                 return False
             num_of_rows += 1
         return True
-
 
     def generate_board(self, size):
         """ Generate an initial sudoku board randomly that is 25% filled. """
