@@ -50,13 +50,12 @@ class CSP:
 
     def init_board(self):
         """ Initialize a sudoku board as a 2D array of Squares, and the domain of each square. """
-        size = self.size_data
-        board = [[None for _ in range(size)] for _ in range(size)]
-        for i, j in itertools.product(range(size), range(size)):
+        board = [[None for _ in range(self.size_data)] for _ in range(self.size_data)]
+        for i, j in itertools.product(range(self.size_data), range(self.size_data)):
             value = self.puzzle_data[i][j]
             if value == 0:
                 # domain = list(self._get_consistent_values(i, j))
-                domain = list(range(1, size + 1))
+                domain = list(range(1, self.size_data + 1))
                 square = Square(i, j, domain)
                 board[i][j] = square
                 if len(domain) > 1:
@@ -68,8 +67,7 @@ class CSP:
     def init_constraints(self):
         """ Generate arc constraints for each square. """
         arcs = set()
-        size = self.size_data
-        for i, j in itertools.product(range(size), range(size)):
+        for i, j in itertools.product(range(self.size_data), range(self.size_data)):
             square = self.board[i][j]
             for arc in self._get_arcs(square):
                 if arc.square1_x != arc.square2_x and arc.square1_y != arc.square2_y:
@@ -86,7 +84,6 @@ class CSP:
             Arc(neighbor[0], neighbor[1], square.row, square.col)
             for neighbor in neighbors
         ]
-
 
     def init_binary_constraints(self):
         """ Populate the neighbors field of every square on the current board. """
@@ -172,7 +169,6 @@ class CSP:
 
     def solve_csp_mp_helper(self, target_cell, v, saved_values):
         """ Recursive csp algorithm with constraint propagation. """
-
         if self.is_consistent(target_cell, v):
             # Add the value to assignment
             target_cell.domain = [v]
@@ -205,8 +201,7 @@ class CSP:
 
         next_empty = self.select_unassigned()
         values = self.find_least_constraining_value(next_empty)
-        saved_values = copy.deepcopy(values)
-        for v in saved_values:
+        for v in values:
             if self.is_consistent(next_empty, v):
                 # Add the value to assignment
                 next_empty.domain = [v]
@@ -225,7 +220,7 @@ class CSP:
                     self.board[square_x][square_y].assigned = False
 
                 # Remove the value from assignment
-                next_empty.domain = saved_values
+                next_empty.domain = values
                 next_empty.assigned = False
                 self.unassigned.add(next_empty)
 
@@ -379,10 +374,9 @@ class CSP:
         :param square: a Square
         :return: a value
         """
-        current_domain = square.domain
-        neighbour_frequency = {val: 0 for val in current_domain}
+        neighbour_frequency = {val: 0 for val in square.domain}
 
-        for val in current_domain:
+        for val in square.domain:
             for neighbour in [neighbor for neighbor in square.neighbors if
                               not self.board[neighbor[0]][neighbor[1]].assigned]:
                 if val in self.board[neighbour[0]][neighbour[1]].domain:
@@ -397,8 +391,7 @@ class CSP:
         """
         self.init_board()
         self.init_binary_constraints()
-        arcs = self.init_constraints()
-        self.ac3(arcs)
+        self.ac3(self.init_constraints())
         # return self.solve_csp()
         return self.solve_csp_multiprocess()
 

@@ -287,7 +287,25 @@ class SudokuBoard:
 
         with open(filename, "r") as f:
             file_data = f.read().strip()
-            self.puzzle_data, self.size_data = self.parse_input_file(file_data)
+            if self.validate_file_contents(file_data):
+                self.puzzle_data, self.size_data = self.parse_input_file(file_data)
+
+    def validate_file_contents(self, file_data):
+
+        puzzle_size = len(file_data.split('\n'))
+        num_of_rows = 0
+        for row in file_data.split('\n'):
+            nums_in_row = 0
+            for char in row.split(','):
+                if char.isdigit():
+                    nums_in_row += 1
+            if nums_in_row != puzzle_size:
+                self.clear()
+                self.display_message("Invalid file contents.")
+                return False
+            num_of_rows += 1
+        return True
+
 
     def generate_board(self, size):
         """ Generate an initial sudoku board randomly that is 25% filled. """
