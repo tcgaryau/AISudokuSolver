@@ -65,7 +65,7 @@ class CSP:
                 board[i][j] = Square(i, j, [value], True)
         self.board = board
 
-    def init_constraints(self):
+    def init_arc_constraints(self):
         """ Generate arc constraints for each square. """
         arcs = set()
         size = self.size_data
@@ -186,8 +186,7 @@ class CSP:
             for square_x, square_y, value in revised_list:
                 self.board[square_x][square_y].domain.append(value)
                 self.unassigned.add(self.board[square_x][square_y])
-                self.board[square_x][square_y].assigned = False
-                # square.domain.append(value)
+                # self.board[square_x][square_y].assigned = False
 
             # Remove the value from assignment
             target_cell.domain = saved_values
@@ -222,7 +221,7 @@ class CSP:
                 for square_x, square_y, value in revised_list:
                     self.board[square_x][square_y].domain.append(value)
                     self.unassigned.add(self.board[square_x][square_y])
-                    self.board[square_x][square_y].assigned = False
+                    # self.board[square_x][square_y].assigned = False
 
                 # Remove the value from assignment
                 next_empty.domain = saved_values
@@ -326,17 +325,20 @@ class CSP:
             for neighbor_group in neighbor_list:
                 cells_to_modify: List[Square] = []
                 naked_found = 0
+                # naked_found = False
                 for neighbor in neighbor_group:
                     neighbor_domain = self.board[neighbor[0]
                                                  ][neighbor[1]].domain
                     if len(neighbor_domain) == 2 and first_val in neighbor_domain and second_val in neighbor_domain:
                         naked_found += 1
+                        naked_found = True
                         continue
                     cells_to_modify.append(
                         self.board[neighbor[0]][neighbor[1]])
                 if naked_found > 1:
                     return False
                 if naked_found == 1:
+                # if naked_found:
                     for cell_to_modify in cells_to_modify:
                         if first_val in cell_to_modify.domain:
                             cell_to_modify.domain.remove(first_val)
@@ -347,7 +349,8 @@ class CSP:
                             revised_list.append(
                                 (cell_to_modify.row, cell_to_modify.col, second_val))
                         # if len(cell_to_modify.domain) == 1:
-                        #     self.unassigned.remove(cell_to_modify)
+                        #     self.unassigned.remove(self.board[cell_to_modify.row][cell_to_modify.col])
+                        #     self.board[cell_to_modify.row][cell_to_modify.col].assigned = True
                         if len(cell_to_modify.domain) == 0:
                             return False
         return True
@@ -368,7 +371,7 @@ class CSP:
                 if len(self.board[arc.square1_x][arc.square1_y].domain) == 1:
                     self.unassigned.remove(
                         self.board[arc.square1_x][arc.square1_y])
-                    self.board[arc.square1_x][arc.square1_y].assigned = True
+                    # self.board[arc.square1_x][arc.square1_y].assigned = True
                 return True
         return False
 
@@ -396,7 +399,7 @@ class CSP:
         """
         self.init_board()
         self.init_binary_constraints()
-        arcs = self.init_constraints()
+        arcs = self.init_arc_constraints()
         self.ac3(arcs)
         return self.solve_csp_multiprocess()
 

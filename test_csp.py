@@ -1514,7 +1514,7 @@ def main():
         #         print(j.row, j.col, j.domain)
 
         # preprocessing using ac3
-        arcs = csp.init_constraints()
+        arcs = csp.init_arc_constraints()
         csp.ac3(arcs)
 
         # print("After initial AC3 with all arcs")
