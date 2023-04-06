@@ -87,6 +87,7 @@ class CSP:
             for neighbor in neighbors
         ]
 
+
     def init_binary_constraints(self):
         """ Populate the neighbors field of every square on the current board. """
         board = self.board
