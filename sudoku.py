@@ -69,9 +69,6 @@ class SudokuBoard:
             frame = Frame(item[0])
             solution_display = item[1]
             puzzle_data = solution_display.puzzle_data
-            # if solver_type := solution_display.solver_type:
-            #     timer_text = f"{solver_type.value} took {solution_display.time_cost} seconds."
-            #     print(timer_text)
 
             # segment:use a canvas inside subframe
             # each square is at least of dimension 20
@@ -177,7 +174,7 @@ class SudokuBoard:
         else:
             inner_frame = self.draw_canvas()
             solution = self.puzzle_solution_1 or self.puzzle_solution_2 or SolutionDisplay(
-                self.puzzle_data, "", None)
+                self.puzzle_data, None, None)
             draw_list = [[inner_frame, solution]]
 
         for row_num in range(0, row, sub_row_num):
@@ -188,25 +185,51 @@ class SudokuBoard:
             if sub_row_num % 2 == 0:
                 colour = self.change_colour(colour)
 
-        if self.brute_force_timer is not None:
-            timer_text = f"Brute Force took {self.brute_force_timer:.5f} s."
-            self.timer_frame = Frame(self.root)
-            timer_label = Label(self.timer_frame, text=timer_text, font=("Arial", 24))
-            timer_label.pack(side=BOTTOM)
-            relx = 0.5
-            if self.brute_force_timer and self.csp_timer:
-                relx= 0.3
-            self.timer_frame.place(relx=relx, y=self.main_height+100, anchor='s')
+        if getattr(self.puzzle_solution_1, "time_cost", None) and getattr(self.puzzle_solution_2, "time_cost", None):
+            self.display_timer(self.puzzle_solution_1, position=1)
+            self.display_timer(self.puzzle_solution_2, position=2)
+        elif getattr(self.puzzle_solution_1, "time_cost", None):
+            self.display_timer(self.puzzle_solution_1)
+        elif getattr(self.puzzle_solution_2, "time_cost", None):
+            self.display_timer(self.puzzle_solution_2)
 
-        if self.csp_timer is not None:
-            timer_text = f"CSP took {self.csp_timer:.5f} s."
-            self.timer_frame_2 = Frame(self.root)
-            timer_label = Label(self.timer_frame_2, text=timer_text, font=("Arial", 24))
-            timer_label.pack(side=BOTTOM)
+
+        # if self.brute_force_timer is not None:
+        #     timer_text = f"Brute Force took {self.brute_force_timer:.5f} s."
+        #     self.timer_frame = Frame(self.root)
+        #     timer_label = Label(self.timer_frame, text=timer_text, font=("Arial", 24))
+        #     timer_label.pack(side=BOTTOM)
+        #     relx = 0.5
+        #     if self.brute_force_timer and self.csp_timer:
+        #         relx= 0.3
+        #     self.timer_frame.place(relx=relx, y=self.main_height+100, anchor='s')
+        #
+        # if self.csp_timer is not None:
+        #     timer_text = f"CSP took {self.csp_timer:.5f} s."
+        #     self.timer_frame_2 = Frame(self.root)
+        #     timer_label = Label(self.timer_frame_2, text=timer_text, font=("Arial", 24))
+        #     timer_label.pack(side=BOTTOM)
+        #     relx = 0.5
+        #     if self.brute_force_timer and self.csp_timer:
+        #         relx= 0.7
+        #     self.timer_frame_2.place(relx=relx, y=self.main_height+100, anchor='s')
+
+    def display_timer(self, solution, position=0):
+        timer_text = f"{solution.solver_type.value} took {solution.time_cost:.5f} seconds."
+        timer_frame = Frame(self.root)
+        if position == 1:
+            self.timer_frame = timer_frame
+            relx = 0.3
+        elif position == 2:
+            self.timer_frame_2 = timer_frame
+            relx = 0.7
+        else:
+            self.timer_frame = timer_frame
             relx = 0.5
-            if self.brute_force_timer and self.csp_timer:
-                relx= 0.7
-            self.timer_frame_2.place(relx=relx, y=self.main_height+100, anchor='s')
+
+        timer_label = Label(timer_frame, text=timer_text, font=("Arial", 24))
+        timer_label.pack(side=BOTTOM)
+        timer_frame.place(relx=relx, y=self.main_height + 100, anchor='s')
 
     def submit(self):
         self.toggle_button('!button2', True)
