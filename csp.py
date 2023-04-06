@@ -68,10 +68,9 @@ class CSP:
     def init_constraints(self):
         """ Generate arc constraints for each square. """
         arcs = set()
-        board = self.board
         size = self.size_data
         for i, j in itertools.product(range(size), range(size)):
-            square = board[i][j]
+            square = self.board[i][j]
             for arc in self._get_arcs(square):
                 if arc.square1_x != arc.square2_x and arc.square1_y != arc.square2_y:
                     arcs.add(arc)
