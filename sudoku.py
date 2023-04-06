@@ -31,8 +31,8 @@ class SudokuBoard:
         self.main_height = None
 
         self.clicked = None
-        self.brute_force_timer = None
-        self.csp_timer = None
+        # self.brute_force_timer = None
+        # self.csp_timer = None
 
         self.puzzle_solution_1 = None
         self.puzzle_solution_2 = None
@@ -56,8 +56,8 @@ class SudokuBoard:
 
     def clear_data(self):
         self.puzzle_data = []
-        self.brute_force_timer = None
-        self.csp_timer = None
+        # self.brute_force_timer = None
+        # self.csp_timer = None
         self.puzzle_solution_1 = None
         self.puzzle_solution_2 = None
 
@@ -395,10 +395,10 @@ class SudokuBoard:
             if solver.solve():
                 solved_puzzle = solver.return_board()
 
-                if mode == SolverType.BF:
-                    self.brute_force_timer = time.perf_counter() - start
-                else:
-                    self.csp_timer = time.perf_counter() - start
+                # if mode == SolverType.BF:
+                #     self.brute_force_timer = time.perf_counter() - start
+                # else:
+                #     self.csp_timer = time.perf_counter() - start
 
                 solution = SolutionDisplay(
                     solved_puzzle, time.perf_counter() - start, mode)
