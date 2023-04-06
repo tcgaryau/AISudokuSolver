@@ -398,18 +398,16 @@ class CSP:
         self.init_binary_constraints()
         arcs = self.init_constraints()
         self.ac3(arcs)
-        # return self.solve_csp()
         return self.solve_csp_multiprocess()
 
     def generate_puzzle_solution(self):
         """ Generate puzzle data from a Board. """
         for i, j in itertools.product(range(self.size_data), range(self.size_data)):
-            # print(self.board[i][j].domain[0])
+
             self.puzzle_data[i][j] = self.board[i][j].domain[0]
 
     def return_board(self):
         """
         :return: puzzle data, a 2D array
         """
-        print("Puzzle data: ", self.puzzle_data)
         return self.puzzle_data
