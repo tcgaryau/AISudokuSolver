@@ -366,19 +366,19 @@ class SudokuBoard:
         self.bottom_frame.children[button_id].configure(state=state)
 
     def solve_puzzle(self, solver, mode):
-        start = time.time()
-        max_time = start + 300
-        while time.time() < max_time:
+        start = time.perf_counter()
+
+        while time.perf_counter() < start + 300:
             if solver.solve():
                 solved_puzzle = solver.return_board()
 
                 if mode == SolverType.BF:
-                    self.brute_force_timer = time.time() - start
+                    self.brute_force_timer = time.perf_counter() - start
                 else:
-                    self.csp_timer = time.time() - start
+                    self.csp_timer = time.perf_counter() - start
 
                 solution = SolutionDisplay(
-                    solved_puzzle, time.time() - start, mode)
+                    solved_puzzle, time.perf_counter() - start, mode)
 
                 if self.puzzle_solution_1:
                     self.puzzle_solution_2 = solution
