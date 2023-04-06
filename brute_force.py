@@ -100,14 +100,24 @@ class BruteForce:
         return best_row, best_col
 
     def get_available_numbers(self, row, col, set_index):
+        """
+        Get a list of numbers that can be used to assign an empty square. An available number must not have been used
+        by other squares in the same row, column, and sub grid of the current square.
+        :param row: row number, int
+        :param col: column number, int
+        :param set_index: sub grid number, int
+        :return: a list of int
+        """
         used_nums = set(
             list(self.row_set[row]) + list(self.col_set[col]) + list(self.sub_grid_set[set_index]))
         all_possible_options = list(range(1, self.size_data + 1))
         return [num for num in all_possible_options if num not in used_nums]
 
     def return_board(self):
+        """ Returns solved puzzle data. """
         # print(self.puzzle_data)
         return self.puzzle_data
 
     def increase_max_depth(self):
+        """ Increase DFS search depth before fail. """
         self.max_fail = self.max_fail * 1.05
