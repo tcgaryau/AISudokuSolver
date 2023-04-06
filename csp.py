@@ -185,6 +185,7 @@ class CSP:
             for square_x, square_y, value in revised_list:
                 self.board[square_x][square_y].domain.append(value)
                 self.unassigned.add(self.board[square_x][square_y])
+                self.board[square_x][square_y].assigned = False
                 # square.domain.append(value)
 
             # Remove the value from assignment
@@ -220,6 +221,7 @@ class CSP:
                 for square_x, square_y, value in revised_list:
                     self.board[square_x][square_y].domain.append(value)
                     self.unassigned.add(self.board[square_x][square_y])
+                    self.board[square_x][square_y].assigned = False
 
                 # Remove the value from assignment
                 next_empty.domain = saved_values
@@ -323,16 +325,18 @@ class CSP:
                 cell.col_neighbors), list(cell.sg_neighbors)]
             for neighbor_group in neighbor_list:
                 cells_to_modify: List[Square] = []
-                naked_found = False
+                naked_found = 0
                 for neighbor in neighbor_group:
                     neighbor_domain = self.board[neighbor[0]
                                                  ][neighbor[1]].domain
                     if len(neighbor_domain) == 2 and first_val in neighbor_domain and second_val in neighbor_domain:
-                        naked_found = True
+                        naked_found += 1
                         continue
                     cells_to_modify.append(
                         self.board[neighbor[0]][neighbor[1]])
-                if naked_found:
+                if naked_found > 1:
+                    return False
+                if naked_found == 1:
                     for cell_to_modify in cells_to_modify:
                         if first_val in cell_to_modify.domain:
                             cell_to_modify.domain.remove(first_val)
@@ -342,6 +346,8 @@ class CSP:
                             cell_to_modify.domain.remove(second_val)
                             revised_list.append(
                                 (cell_to_modify.row, cell_to_modify.col, second_val))
+                        # if len(cell_to_modify.domain) == 1:
+                        #     self.unassigned.remove(cell_to_modify)
                         if len(cell_to_modify.domain) == 0:
                             return False
         return True
@@ -362,6 +368,7 @@ class CSP:
                 if len(self.board[arc.square1_x][arc.square1_y].domain) == 1:
                     self.unassigned.remove(
                         self.board[arc.square1_x][arc.square1_y])
+                    self.board[arc.square1_x][arc.square1_y].assigned = True
                 return True
         return False
 
