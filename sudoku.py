@@ -371,6 +371,7 @@ class SudokuBoard:
         while time.time() < max_time:
             if solver.solve():
                 solved_puzzle = solver.return_board()
+                print(solved_puzzle)
 
                 if mode == SolverType.BF:
                     self.brute_force_timer = time.time() - start
