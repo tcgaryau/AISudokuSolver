@@ -1526,10 +1526,20 @@ def main():
         else:
             print(
                 f"Failed to solve in {time.perf_counter() - start_time} seconds")
-        # print("\nSolved Board")
-        # for i in csp.board:
-        #     for j in i:
-        #         print(j.row, j.col, j.domain)
+        print("\nSolved Board")
+        print("\n-----------------------------------------------------------------------------------------------------")
+
+        for i in range(csp.size_data):
+            for j in range(csp.size_data):
+                if csp.board[i][j].domain[0] is not None:
+                    if j == 0:
+                        print("|", end="\t")
+                    print(f"{csp.board[i][j].domain[0]} ", end="\t")
+                if (j + 1) % 5 == 0:
+                    print("|", end="\t")
+            if (i + 1) % 5 == 0:
+                print("\n----------------------------------------------------------------------------------------------", end=" ")
+            print()
 
 
 if __name__ == "__main__":
