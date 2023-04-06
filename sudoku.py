@@ -371,14 +371,11 @@ class SudokuBoard:
         while time.time() < max_time:
             if solver.solve():
                 solved_puzzle = solver.return_board()
-                print(solved_puzzle)
 
                 if mode == SolverType.BF:
                     self.brute_force_timer = time.time() - start
-                    print(f"BF took {self.brute_force_timer} s")
                 else:
                     self.csp_timer = time.time() - start
-                    print(f"CSP took {self.csp_timer} s")
 
                 solution = SolutionDisplay(
                     solved_puzzle, time.time() - start, mode)
