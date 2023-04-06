@@ -14,6 +14,7 @@ btnFont = ("Californian FB", 15)
 
 
 class SudokuBoard:
+    """ Contains sudoku board's data and UI. """
 
     def __init__(self):
         self.timer_frame_2 = None
@@ -31,13 +32,14 @@ class SudokuBoard:
         self.main_height = None
 
         self.clicked = None
-        self.brute_force_timer = None
-        self.csp_timer = None
+        # self.brute_force_timer = None
+        # self.csp_timer = None
 
         self.puzzle_solution_1 = None
         self.puzzle_solution_2 = None
 
     def clear(self):
+        """ Clear all widgets. """
         for widget in self.main_frame.winfo_children():
             widget.destroy()
             cells.clear()
@@ -55,9 +57,10 @@ class SudokuBoard:
             self.timer_frame_2 = None
 
     def clear_data(self):
+        """ Clear board data. """
         self.puzzle_data = []
-        self.brute_force_timer = None
-        self.csp_timer = None
+        # self.brute_force_timer = None
+        # self.csp_timer = None
         self.puzzle_solution_1 = None
         self.puzzle_solution_2 = None
 
@@ -65,13 +68,11 @@ class SudokuBoard:
         return "#ffffd0" if colour == "#D0ffff" else "#D0ffff"
 
     def draw_sub_grid(self, row_num, col_num, sub_row_num, sub_col_num, bgcolour, draw_list):
+        """ Draw one of the sub-grid of a sudoku board. """
         for item in draw_list:
             frame = Frame(item[0])
             solution_display = item[1]
             puzzle_data = solution_display.puzzle_data
-            # if solver_type := solution_display.solver_type:
-            #     timer_text = f"{solver_type.value} took {solution_display.time_cost} seconds."
-            #     print(timer_text)
 
             # segment:use a canvas inside subframe
             # each square is at least of dimension 20
@@ -112,6 +113,7 @@ class SudokuBoard:
             frame.grid(row=row_num + 1, column=col_num + 1)
 
     def draw_canvas(self, duo=False):
+        """ Set up Canvas for each sudoku board. """
         if duo:
             canvas1 = Canvas(
                 self.main_frame, height=self.main_height, width=self.main_height)
@@ -119,10 +121,12 @@ class SudokuBoard:
                 self.main_frame, height=self.main_height, width=self.main_height)
 
             def h_scroll(*args):
+                """ Set up horizontal scrollbar. """
                 canvas1.xview(*args)
                 canvas2.xview(*args)
 
             def v_scroll(*args):
+                """ Set up vertical scrollbar. """
                 canvas1.yview(*args)
                 canvas2.yview(*args)
 
@@ -168,6 +172,7 @@ class SudokuBoard:
             return inner_frame
 
     def draw_whole_grid(self, row, col, sub_row_num, sub_col_num):
+        """ Draw the entire sudoku board. """
         self.clear()
         colour = "#D0ffff"
         if self.puzzle_solution_1 and self.puzzle_solution_2:
@@ -177,7 +182,7 @@ class SudokuBoard:
         else:
             inner_frame = self.draw_canvas()
             solution = self.puzzle_solution_1 or self.puzzle_solution_2 or SolutionDisplay(
-                self.puzzle_data, "", None)
+                self.puzzle_data, None, None)
             draw_list = [[inner_frame, solution]]
 
         for row_num in range(0, row, sub_row_num):
@@ -188,27 +193,58 @@ class SudokuBoard:
             if sub_row_num % 2 == 0:
                 colour = self.change_colour(colour)
 
-        if self.brute_force_timer is not None:
-            timer_text = f"Brute Force took {self.brute_force_timer:.5f} s."
-            self.timer_frame = Frame(self.root)
-            timer_label = Label(self.timer_frame, text=timer_text, font=("Arial", 24))
-            timer_label.pack(side=BOTTOM)
-            relx = 0.5
-            if self.brute_force_timer and self.csp_timer:
-                relx= 0.3
-            self.timer_frame.place(relx=relx, y=self.main_height+100, anchor='s')
+        if getattr(self.puzzle_solution_1, "time_cost", None) and getattr(self.puzzle_solution_2, "time_cost", None):
+            self.display_timer(self.puzzle_solution_1, position=1)
+            self.display_timer(self.puzzle_solution_2, position=2)
+        elif getattr(self.puzzle_solution_1, "time_cost", None):
+            self.display_timer(self.puzzle_solution_1)
+        elif getattr(self.puzzle_solution_2, "time_cost", None):
+            self.display_timer(self.puzzle_solution_2)
 
-        if self.csp_timer is not None:
-            timer_text = f"CSP took {self.csp_timer:.5f} s."
-            self.timer_frame_2 = Frame(self.root)
-            timer_label = Label(self.timer_frame_2, text=timer_text, font=("Arial", 24))
-            timer_label.pack(side=BOTTOM)
+        # if self.brute_force_timer is not None:
+        #     timer_text = f"Brute Force took {self.brute_force_timer:.5f} s."
+        #     self.timer_frame = Frame(self.root)
+        #     timer_label = Label(self.timer_frame, text=timer_text, font=("Arial", 24))
+        #     timer_label.pack(side=BOTTOM)
+        #     relx = 0.5
+        #     if self.brute_force_timer and self.csp_timer:
+        #         relx= 0.3
+        #     self.timer_frame.place(relx=relx, y=self.main_height+100, anchor='s')
+        #
+        # if self.csp_timer is not None:
+        #     timer_text = f"CSP took {self.csp_timer:.5f} s."
+        #     self.timer_frame_2 = Frame(self.root)
+        #     timer_label = Label(self.timer_frame_2, text=timer_text, font=("Arial", 24))
+        #     timer_label.pack(side=BOTTOM)
+        #     relx = 0.5
+        #     if self.brute_force_timer and self.csp_timer:
+        #         relx= 0.7
+        #     self.timer_frame_2.place(relx=relx, y=self.main_height+100, anchor='s')
+
+    def display_timer(self, solution, position=0):
+        """
+        Display the time cost for the corresponding sudoku solver.
+        :param solution: SolutionDisplay
+        :param position: 0 to display in the center, 1 left, 2 right
+        """
+        timer_text = f"{solution.solver_type.value} took {solution.time_cost:.5f} seconds."
+        timer_frame = Frame(self.root)
+        if position == 1:
+            self.timer_frame = timer_frame
+            relx = 0.3
+        elif position == 2:
+            self.timer_frame_2 = timer_frame
+            relx = 0.7
+        else:
+            self.timer_frame = timer_frame
             relx = 0.5
-            if self.brute_force_timer and self.csp_timer:
-                relx= 0.7
-            self.timer_frame_2.place(relx=relx, y=self.main_height+100, anchor='s')
+
+        timer_label = Label(timer_frame, text=timer_text, font=("Arial", 24))
+        timer_label.pack(side=BOTTOM)
+        timer_frame.place(relx=relx, y=self.main_height + 100, anchor='s')
 
     def submit(self):
+        """ Display initial sudoku board according to user's selection. """
         self.toggle_button('!button2', True)
         self.toggle_button('!button3', True)
         match self.clicked.get():
@@ -233,6 +269,7 @@ class SudokuBoard:
                     math.sqrt(self.size_data)), math.ceil(math.sqrt(self.size_data)))
 
     def browse_files(self):
+        """ Accept and read a .txt file from user input with sudoku board data; Use the data to initialize the board."""
         label_file_explorer = Label(self.main_frame,
                                     text="File Explorer using Tkinter",
                                     width=100, height=4,
@@ -253,6 +290,7 @@ class SudokuBoard:
             self.puzzle_data, self.size_data = self.parse_input_file(file_data)
 
     def generate_board(self, size):
+        """ Generate an initial sudoku board randomly that is 25% filled. """
         board = [[0 for _ in range(size)] for _ in range(size)]
         board_tiles = size * size
         required_tiles = board_tiles * 0.25
@@ -269,8 +307,8 @@ class SudokuBoard:
             can_put_in_row = value_to_insert not in self.row_set[row]
             can_put_in_col = value_to_insert not in self.col_set[col]
             can_put_in_subgrid = value_to_insert not in \
-                self.sub_grid_set[(row // subgrid_size) * subgrid_size +
-                                  (col // math.ceil(math.sqrt(size)))]
+                                 self.sub_grid_set[(row // subgrid_size) * subgrid_size +
+                                                   (col // math.ceil(math.sqrt(size)))]
             if board[row][col] == 0 and can_put_in_row and can_put_in_col and can_put_in_subgrid:
                 board[row][col] = value_to_insert
                 self.row_set[row].add(value_to_insert)
@@ -284,6 +322,7 @@ class SudokuBoard:
         print(self.puzzle_data)
 
     def parse_input_file(self, data):
+        """ Parse sudoku board data read from a file. """
         data = data.split("\n")
         puzzle_size = len(data)
         data = [int(num) for row in data for num in row.split(',')]
@@ -312,6 +351,7 @@ class SudokuBoard:
         return data, puzzle_size
 
     def drop_down_menu(self):
+        """ Set up dropdown menu for sudoku size. """
         options = [
             "From File",
             "9x9",
@@ -336,6 +376,7 @@ class SudokuBoard:
             row=0, column=0, columnspan=5)
 
     def create_sudoku(self):
+        """ On click 'Create Sudoku' button. """
         self.clear_data()
         self.clear()
         self.drop_down_menu()
@@ -343,6 +384,7 @@ class SudokuBoard:
         self.toggle_button("!button3", False)
 
     def on_click_solve_brute_force(self):
+        """ Solve sudoku using brute force algorithm. """
         self.clear()
         self.toggle_button("!button2", False)
         brute_force = BruteForce(
@@ -350,12 +392,14 @@ class SudokuBoard:
         self.solve_puzzle(brute_force, SolverType.BF)
 
     def on_click_solve_csp(self):
+        """ Solve sudoku using CSP algorithm. """
         self.clear()
         self.toggle_button("!button3", False)
         csp = CSP(self.puzzle_data)
         self.solve_puzzle(csp, SolverType.CSP)
 
     def on_click_clear(self):
+        """ Reset data and UI. """
         self.clear()
         self.clear_data()
         self.toggle_button('!button2', False)
@@ -366,16 +410,17 @@ class SudokuBoard:
         self.bottom_frame.children[button_id].configure(state=state)
 
     def solve_puzzle(self, solver, mode):
+        """ Solve sudoku puzzle with the given solver. """
         start = time.perf_counter()
 
         while time.perf_counter() < start + 300:
             if solver.solve():
                 solved_puzzle = solver.return_board()
 
-                if mode == SolverType.BF:
-                    self.brute_force_timer = time.perf_counter() - start
-                else:
-                    self.csp_timer = time.perf_counter() - start
+                # if mode == SolverType.BF:
+                #     self.brute_force_timer = time.perf_counter() - start
+                # else:
+                #     self.csp_timer = time.perf_counter() - start
 
                 solution = SolutionDisplay(
                     solved_puzzle, time.perf_counter() - start, mode)
@@ -403,6 +448,7 @@ class SudokuBoard:
             self.display_message("Timer ran out. No solution found.")
 
     def main(self):
+        """ Driver the program. """
         self.root = Tk()
         self.root.geometry("900x900")
         self.root.attributes('-fullscreen', True)
@@ -446,11 +492,13 @@ class SudokuBoard:
 
 
 class SolverType(Enum):
+    """ Type of a sudoku solver. """
     BF = "Brute Force"
     CSP = "CSP"
 
 
 class SolutionDisplay:
+    """ Contains the solution, time cost and solver used for a solved puzzle. """
 
     def __init__(self, puzzle_data, time_cost, solver_type):
         self.puzzle_data = puzzle_data
