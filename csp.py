@@ -315,7 +315,6 @@ class CSP:
         return True, revised_list
 
     def naked_pairs(self, revised_list):
-        # unassigned_cells = [cell for cell in self.unassigned if len(cell.domain) == 2]
 
         for cell in self.unassigned:
             if len(cell.domain) != 2:
