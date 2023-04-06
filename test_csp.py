@@ -1500,8 +1500,8 @@ def main():
                grp3_9x9_3, grp4_9x9_1, grp4_9x9_2, grp4_9x9_3, grp5_9x9_1, grp5_9x9_2, grp5_9x9_3]
 
 
-    the_good_ones = [grp1_25x25_1, grp1_25x25_2, grp1_25x25_3, grp2_25x25_2, grp3_25x25_1, grp3_25x25_2, grp3_25x25_3]
-    restart_16 = all_25x25
+    the_good_ones = [grp1_25x25_1, grp3_25x25_2, grp3_25x25_3]
+    restart_16 = the_good_ones
     # for sets in all_puzzles:
     for i, puzzle in enumerate(restart_16):
         csp = CSP(puzzle)

@@ -3,7 +3,7 @@ import copy
 import itertools
 import multiprocessing
 import functools
-from typing import Set, List, Tuple
+from typing import Set, List
 
 
 class Square:
@@ -138,12 +138,12 @@ class CSP:
         saved_values = copy.deepcopy(values)
 
         with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-            def quit_process(args):
-                for arg in args:
-                    if isinstance(arg, tuple):
-                        self.board = arg[1]
-                        pool.terminate()
-                        return True
+            # def quit_process(args):
+            #     for arg in args:
+            #         if isinstance(arg, tuple):
+            #             self.board = arg[1]
+            #             pool.terminate()
+            #             return True
 
             starts = [(next_empty, v, saved_values) for v in saved_values]
             print("Starting Length of starts: ", len(starts))
@@ -327,27 +327,22 @@ class CSP:
                 naked_found = 0
                 # naked_found = False
                 for neighbor in neighbor_group:
-                    neighbor_domain = self.board[neighbor[0]
-                                                 ][neighbor[1]].domain
+                    neighbor_domain = self.board[neighbor[0]][neighbor[1]].domain
                     if len(neighbor_domain) == 2 and first_val in neighbor_domain and second_val in neighbor_domain:
                         naked_found += 1
-                        naked_found = True
                         continue
-                    cells_to_modify.append(
-                        self.board[neighbor[0]][neighbor[1]])
+                    cells_to_modify.append(self.board[neighbor[0]][neighbor[1]])
                 if naked_found > 1:
                     return False
                 if naked_found == 1:
-                # if naked_found:
                     for cell_to_modify in cells_to_modify:
                         if first_val in cell_to_modify.domain:
                             cell_to_modify.domain.remove(first_val)
-                            revised_list.append(
-                                (cell_to_modify.row, cell_to_modify.col, first_val))
+                            revised_list.append((cell_to_modify.row, cell_to_modify.col, first_val))
                         if second_val in cell_to_modify.domain:
                             cell_to_modify.domain.remove(second_val)
-                            revised_list.append(
-                                (cell_to_modify.row, cell_to_modify.col, second_val))
+                            revised_list.append((cell_to_modify.row, cell_to_modify.col, second_val))
+
                         # if len(cell_to_modify.domain) == 1:
                         #     self.unassigned.remove(self.board[cell_to_modify.row][cell_to_modify.col])
                         #     self.board[cell_to_modify.row][cell_to_modify.col].assigned = True
@@ -369,8 +364,7 @@ class CSP:
                 self.board[arc.square1_x][arc.square1_y].domain.remove(x)
                 revised_list.append((arc.square1_x, arc.square1_y, x))
                 if len(self.board[arc.square1_x][arc.square1_y].domain) == 1:
-                    self.unassigned.remove(
-                        self.board[arc.square1_x][arc.square1_y])
+                    self.unassigned.remove(self.board[arc.square1_x][arc.square1_y])
                     # self.board[arc.square1_x][arc.square1_y].assigned = True
                 return True
         return False
