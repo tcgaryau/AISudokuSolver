@@ -9,8 +9,9 @@ from typing import Set, List
 class Square:
     """
     Represent a square on a sudoku board.
-    Each square has a row and col number; a flag indicating whether it has been assigned a value; a set containing
-    all values that can be assigned as its domain; a set containing all unassigned neighbors of the square.
+    Each square has a row and col number; a flag indicating whether it has been assigned a value;
+    a set containing all values that can be assigned as its domain; a set containing all unassigned
+    neighbors of the square.
     """
 
     def __init__(self, row, col, domain, assigned=False):
@@ -25,13 +26,15 @@ class Square:
         # TODO: add a subgrid store
 
     def __str__(self):
-        return f"Square {self.row} {self.col} domain: {self.domain} length of neighbors: {len(self.neighbors)}"
+        return f"Square {self.row} {self.col} domain: {self.domain} " \
+               f"length of neighbors: {len(self.neighbors)}"
 
 
 class Arc:
     """
     Represent an arc between two squares.
-    Each arc has a start square and an end square.
+    Each arc has contains 4 variables representing the x and y positions of
+    two squares.
     """
 
     def __init__(self, square1_x, square1_y, square2_x, square2_y):
@@ -42,7 +45,14 @@ class Arc:
 
 
 class CSP:
+    """
+    Represents a constraint satisfaction problem.
+    """
     def __init__(self, puzzle_data):
+        """
+        Initialize a CSP object.
+        :param puzzle_data: a 2D array of integers representing a sudoku puzzle
+        """
         self.puzzle_data = copy.deepcopy(puzzle_data)
         self.size_data = len(puzzle_data)
         self.board = None
@@ -94,7 +104,6 @@ class CSP:
 
         for i, j in itertools.product(range(size), range(size)):
             curr_square: Square = board[i][j]
-            # for curr_square in self.unassigned:
             row = curr_square.row
             col = curr_square.col
 
@@ -117,14 +126,11 @@ class CSP:
                 if m + shift_row != row and n + shift_col != col:
                     curr_square.neighbors.add((square.row, square.col))
                     curr_square.sg_neighbors.add((square.row, square.col))
-            # curr_square.neighbors = set(list(curr_square.row_neighbors) + list(curr_square.col_neighbors)
-            #                             + list(curr_square.sg_neighbors))
 
     def solve_csp_multiprocess(self):
-        """ CSP algorithms. Use multiprocessing for searching."""
-        import sys
-        sys.setrecursionlimit(10000000)
-
+        """
+        CSP algorithms. Use multiprocessing for searching.
+        """
         # Return true if all squares have been assigned a value
         if len(self.unassigned) == 0:
             self.generate_puzzle_solution()
@@ -134,6 +140,7 @@ class CSP:
         values = self.find_least_constraining_value(next_empty)
         saved_values = copy.deepcopy(values)
 
+        # Initialize the pool and send the task to each process
         with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
             # def quit_process(args):
             #     for arg in args:
@@ -160,7 +167,6 @@ class CSP:
                     pool.terminate()
                     self.generate_puzzle_solution()
                     return True
-
         return False
 
         # if self.solve_csp():
@@ -182,7 +188,6 @@ class CSP:
             for square_x, square_y, value in revised_list:
                 self.board[square_x][square_y].domain.append(value)
                 self.unassigned.add(self.board[square_x][square_y])
-                # self.board[square_x][square_y].assigned = False
 
             # Remove the value from assignment
             target_cell.domain = saved_values
@@ -216,7 +221,6 @@ class CSP:
                 for square_x, square_y, value in revised_list:
                     self.board[square_x][square_y].domain.append(value)
                     self.unassigned.add(self.board[square_x][square_y])
-                    # self.board[square_x][square_y].assigned = False
 
                 # Remove the value from assignment
                 next_empty.domain = values
@@ -228,8 +232,8 @@ class CSP:
     def is_consistent(self, next_empty, v):
         """ Check if the neighbors of next_empty is arc-consistent with it. """
         return not any(
-            len(self.board[neighbor[0]][neighbor[1]
-                                        ].domain) == 1 and v in self.board[neighbor[0]][neighbor[1]].domain
+            len(self.board[neighbor[0]][neighbor[1]].domain) == 1
+            and v in self.board[neighbor[0]][neighbor[1]].domain
             for neighbor in next_empty.neighbors
         )
 
@@ -269,7 +273,8 @@ class CSP:
         md = []
         for square in squares:
             degree = len(
-                [neighbor for neighbor in square.neighbors if not self.board[neighbor[0]][neighbor[1]].assigned])
+                [neighbor for neighbor in square.neighbors
+                 if not self.board[neighbor[0]][neighbor[1]].assigned])
             if degree > max_degree:
                 md = [square]
                 max_degree = degree
@@ -323,7 +328,8 @@ class CSP:
                 # naked_found = False
                 for neighbor in neighbor_group:
                     neighbor_domain = self.board[neighbor[0]][neighbor[1]].domain
-                    if len(neighbor_domain) == 2 and first_val in neighbor_domain and second_val in neighbor_domain:
+                    if len(neighbor_domain) == 2 and first_val in neighbor_domain \
+                            and second_val in neighbor_domain:
                         naked_found += 1
                         continue
                     cells_to_modify.append(self.board[neighbor[0]][neighbor[1]])
@@ -333,7 +339,8 @@ class CSP:
                     for cell_to_modify in cells_to_modify:
                         if first_val in cell_to_modify.domain:
                             cell_to_modify.domain.remove(first_val)
-                            revised_list.append((cell_to_modify.row, cell_to_modify.col, first_val))
+                            revised_list.append((cell_to_modify.row,
+                                                 cell_to_modify.col, first_val))
                         if second_val in cell_to_modify.domain:
                             cell_to_modify.domain.remove(second_val)
                             revised_list.append((cell_to_modify.row, cell_to_modify.col, second_val))
