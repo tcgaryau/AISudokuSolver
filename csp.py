@@ -59,7 +59,9 @@ class CSP:
         self.unassigned: Set[Square] = set()
 
     def init_board(self):
-        """ Initialize a sudoku board as a 2D array of Squares, and the domain of each square. """
+        """
+        Initialize a sudoku board as a 2D array of Squares, and the domain of each square.
+        """
         board = [[None for _ in range(self.size_data)] for _ in range(self.size_data)]
         for i, j in itertools.product(range(self.size_data), range(self.size_data)):
             value = self.puzzle_data[i][j]
@@ -75,7 +77,9 @@ class CSP:
         self.board = board
 
     def init_arc_constraints(self):
-        """ Generate arc constraints for each square. """
+        """
+        Generate arc constraints for each square. This is used for the initial AC3 preprocessing
+        """
         arcs = set()
         for i, j in itertools.product(range(self.size_data), range(self.size_data)):
             square = self.board[i][j]
@@ -85,9 +89,15 @@ class CSP:
         return arcs
 
     def _get_neighbors(self, square):
+        """
+        Returns the neighbors of the square
+        """
         return square.neighbors
 
     def _get_arcs(self, square):
+        """
+        Returns all the arcs from a square. Used with MAC arc generation
+        """
         neighbors = self._get_neighbors(square)
 
         return [
@@ -96,7 +106,11 @@ class CSP:
         ]
 
     def init_binary_constraints(self):
-        """ Populate the neighbors field of every square on the current board. """
+        """
+        Populate the neighbors field of every square on the current board.
+        This also adds all the neighbors, row neighbors, col neighbors and
+        subgrid neighbors to each square
+        """
         board = self.board
         size = self.size_data
         sg_row_total = int(math.sqrt(size))
@@ -142,25 +156,9 @@ class CSP:
 
         # Initialize the pool and send the task to each process
         with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-            # def quit_process(args):
-            #     for arg in args:
-            #         if isinstance(arg, tuple):
-            #             self.board = arg[1]
-            #             pool.terminate()
-            #             return True
-
-            starts = [(next_empty, v, saved_values) for v in saved_values]
-            print("Starting Length of starts: ", len(starts))
-
-            # using starmap_async (original)
-            # results = pool.starmap_async(self.solve_csp_mp_helper, starts,
-            #                    callback=quit_process, chunksize=1)
-            # results.wait()
-
-            # using imap_unordered
             for results in pool.imap_unordered(
                     functools.partial(
-                        self.solve_csp_mp_helper, next_empty, saved_values=saved_values), values,
+                        self.backtrack_mp_helper, next_empty, saved_values=saved_values), values,
                     chunksize=1):
                 if results:
                     self.board = results[1]
@@ -169,12 +167,11 @@ class CSP:
                     return True
         return False
 
-        # if self.solve_csp():
-        #     print("Finished solving")
-        #     return True
-
-    def solve_csp_mp_helper(self, target_cell, v, saved_values):
-        """ Recursive csp algorithm with constraint propagation. """
+    def backtrack_mp_helper(self, target_cell, v, saved_values):
+        """
+        Recursive csp algorithm with constraint propagation. This is almost the same function
+        as backtrack, but it is a wrapper to set up multiprocessing correctly.
+        """
         if self.is_consistent(target_cell, v):
             # Add the value to assignment
             target_cell.domain = [v]
@@ -183,7 +180,7 @@ class CSP:
 
             # MAC using ac-3
             is_inference, revised_list = self.mac(target_cell)
-            if is_inference and self.solve_csp():
+            if is_inference and self.backtrack():
                 return True, self.board
             for square_x, square_y, value in revised_list:
                 self.board[square_x][square_y].domain.append(value)
@@ -195,15 +192,17 @@ class CSP:
             self.unassigned.add(target_cell)
         return False
 
-    def solve_csp(self):
-        """ CSP algorithms. """
+    def backtrack(self):
+        """CSP back tracking algorithm."""
 
         # Return true if all squares have been assigned a value
         if len(self.unassigned) == 0:
             self.generate_puzzle_solution()
             return True
-
+        # MRV heuristic with degree heuristic for tiebreak
         next_empty = self.select_unassigned()
+
+        # This uses the least constraining value heuristic to find the order of values
         values = self.find_least_constraining_value(next_empty)
         for v in values:
             if self.is_consistent(next_empty, v):
@@ -214,10 +213,13 @@ class CSP:
 
                 # MAC using ac-3
                 is_inference, revised_list = self.mac(next_empty)
-                # if is_inference:
-                #     valid_naked_pair = self.naked_pairs(revised_list)
-                if is_inference and self.naked_pairs(revised_list) and self.solve_csp():
+
+                # We put in a naked pair check which also makes sure the board is still valid
+                # after removing values It then also backtracks.
+                if is_inference and self.naked_pairs(revised_list) and self.backtrack():
                     return True
+
+                # This is the backtrack part where it adds back onto the domain when a branch fails.
                 for square_x, square_y, value in revised_list:
                     self.board[square_x][square_y].domain.append(value)
                     self.unassigned.add(self.board[square_x][square_y])
@@ -226,7 +228,6 @@ class CSP:
                 next_empty.domain = values
                 next_empty.assigned = False
                 self.unassigned.add(next_empty)
-
         return False
 
     def is_consistent(self, next_empty, v):
@@ -314,7 +315,11 @@ class CSP:
         return True, revised_list
 
     def naked_pairs(self, revised_list):
-
+        """
+        Naked Pairs where it checks for each row, col and subgrid and check if two cells have the
+        same domain of size 2. If that happens it would remove those numbers from the corresponding
+        row, col or subgrid.
+        """
         for cell in self.unassigned:
             if len(cell.domain) != 2:
                 continue
@@ -343,11 +348,8 @@ class CSP:
                                                  cell_to_modify.col, first_val))
                         if second_val in cell_to_modify.domain:
                             cell_to_modify.domain.remove(second_val)
-                            revised_list.append((cell_to_modify.row, cell_to_modify.col, second_val))
-
-                        # if len(cell_to_modify.domain) == 1:
-                        #     self.unassigned.remove(self.board[cell_to_modify.row][cell_to_modify.col])
-                        #     self.board[cell_to_modify.row][cell_to_modify.col].assigned = True
+                            revised_list.append((cell_to_modify.row,
+                                                 cell_to_modify.col, second_val))
                         if len(cell_to_modify.domain) == 0:
                             return False
         return True
@@ -356,6 +358,7 @@ class CSP:
         """
         Check if the domain of a square is consistent with its neighbors.
         :param arc: an Arc
+        :param revised_list: a List
         :return: a boolean
         """
         if len(self.board[arc.square2_x][arc.square2_y].domain) > 1:
@@ -373,7 +376,7 @@ class CSP:
 
     def find_least_constraining_value(self, square):
         """
-        Find the value that will eliminate the least number of values in the domain of its neighbors.
+        Find the value that will eliminate the least number of values in the domain of its neighbors
         :param square: a Square
         :return: a value
         """
