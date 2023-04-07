@@ -1,5 +1,6 @@
 #AISudokuSolver
-Team4forCOMP3981
+Team4 for COMP3981
+Ramil Garipov, Felix Ng, Gary Au, Kirin Tang
 
 Wireframe:
 https://www.figma.com/file/oHEESjudYPdYPDR0O3w2S9/Wireframing-(Copy)?node-id=651378-93
