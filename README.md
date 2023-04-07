@@ -14,8 +14,9 @@ Now the user can click "Solve (Heuristic)" or "Solve (CSP)" to solve the Sudoku 
 
 # Terminal test
 To see CSP results directly in the terminal, run test_csp.py.
-Navigate to the line that says "grids_to_run" and assign it a value of the array you want to run [all_9x9, all_12x12,
-all_16x16, all_25x25, and all_100x100]. Then run the file. The results of the board and the computational time 
+Navigate to the bottom of the file and run the main function, passing in the parameter for the size of puzzles that you
+would like to test. We have pre-built the following lists of puzzles: [all_9x9, all_12x12, all_16x16, all_25x25, 
+all_100x100]. Currently, the program is set to run all_9x9 puzzles. The results of the board and the computational time 
 will be printed in the terminal.
 
 # File validation:
