@@ -290,21 +290,19 @@ class SudokuBoard:
         Validate the contents of the file to ensure that it is a valid sudoku board.
         """
         puzzle_size = len(file_data.split('\n'))
-        num_of_rows = 0
         for row in file_data.split('\n'):
-            nums_in_row = 0
-            for char in row.split(','):
-                if char.isdigit():
-                    nums_in_row += 1
+            nums_in_row = sum(1 for char in row.split(',') if char.isdigit())
             if nums_in_row != puzzle_size:
                 self.clear()
                 self.display_message("Invalid file contents.")
                 return False
-            num_of_rows += 1
         return True
 
     def generate_board(self, size):
-        """ Generate an initial sudoku board randomly that is 25% filled. """
+        """
+        Generate an initial sudoku board randomly that is 25% filled.
+        :param size: int representing the edge size of the board
+        """
         board = [[0 for _ in range(size)] for _ in range(size)]
         board_tiles = size * size
         required_tiles = board_tiles * 0.25
@@ -313,30 +311,32 @@ class SudokuBoard:
         self.row_set = [set() for _ in range(size)]
         self.col_set = [set() for _ in range(size)]
         self.sub_grid_set = [set() for _ in range(size)]
+
+        # Add numbers into the board until we hit the limit of 25% filled
         while tiles_placed < required_tiles:
             row = random.randint(0, size - 1)
             col = random.randint(0, size - 1)
             value_to_insert = random.randint(1, size)
+            sub_grid_index = (row // subgrid_size) * subgrid_size + \
+                             (col // math.ceil(math.sqrt(size)))
 
             can_put_in_row = value_to_insert not in self.row_set[row]
             can_put_in_col = value_to_insert not in self.col_set[col]
-            can_put_in_subgrid = value_to_insert not in \
-                                 self.sub_grid_set[(row // subgrid_size) * subgrid_size +
-                                                   (col // math.ceil(math.sqrt(size)))]
+            can_put_in_subgrid = value_to_insert not in self.sub_grid_set[sub_grid_index]
             if board[row][col] == 0 and can_put_in_row and can_put_in_col and can_put_in_subgrid:
                 board[row][col] = value_to_insert
                 self.row_set[row].add(value_to_insert)
                 self.col_set[col].add(value_to_insert)
-                self.sub_grid_set[
-                    (row // subgrid_size) * subgrid_size + (col // math.ceil(math.sqrt(size)))].add(
-                    value_to_insert)
+                self.sub_grid_set[sub_grid_index].add(value_to_insert)
                 tiles_placed += 1
         self.puzzle_data = board
         self.size_data = len(self.puzzle_data)
-        print(self.puzzle_data)
 
     def parse_input_file(self, data):
-        """ Parse sudoku board data read from a file. """
+        """
+        Parse sudoku board data read from a file.
+        param data: string of puzzle data
+        """
         data = data.split("\n")
         puzzle_size = len(data)
 
@@ -422,11 +422,20 @@ class SudokuBoard:
         self.toggle_button('!button3', False)
 
     def toggle_button(self, button_id, enable):
+        """
+        Toggles the button state between active and disabled
+        param: str button_id
+        param: boolean enable
+        """
         state = "active" if enable else "disabled"
         self.bottom_frame.children[button_id].configure(state=state)
 
     def solve_puzzle(self, solver, mode):
-        """ Solve sudoku puzzle with the given solver. """
+        """
+        Solve sudoku puzzle with the given solver.
+        param solver: BruteForce or CSP object
+        mode: BF or CSP enum
+        """
         start = time.perf_counter()
 
         while time.perf_counter() < start + 300:
@@ -456,8 +465,8 @@ class SudokuBoard:
         else:
             self.display_message("Timer ran out. No solution found.")
 
-    def main(self):
-        """ Driver the program. """
+    def gui(self):
+        """ Creates the GUI. """
         self.root = Tk()
         self.root.geometry("900x900")
         self.root.attributes('-fullscreen', True)
@@ -504,7 +513,9 @@ class SudokuBoard:
 
 
 class SolverType(Enum):
-    """ Type of a sudoku solver. """
+    """
+    Type of a sudoku solver.
+    """
     BF = "Brute Force"
     CSP = "CSP"
 
@@ -520,4 +531,4 @@ class SolutionDisplay:
 
 if __name__ == "__main__":
     sudoku = SudokuBoard()
-    sudoku.main()
+    sudoku.gui()

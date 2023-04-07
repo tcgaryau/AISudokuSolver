@@ -103,3 +103,9 @@ board sizes.
 # Resources:
 Solving Sudoku by Heuristic Search - David Carmel
 https://medium.com/@davidcarmel/solving-sudoku-by-heuristic-search-b0c2b2c5346e
+
+GUI Sudoku Solver | Python Tutorial - Sharnav's Tech
+https://www.youtube.com/watch?v=xAXmfZmC2SI
+
+Adding a Full Screen ScrollBar - Python Tkinter GUI Tutorial - Codemy.com
+https://www.youtube.com/watch?v=0WafQCaok6g
