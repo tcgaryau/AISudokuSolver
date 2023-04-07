@@ -13,7 +13,10 @@ The user now clicks "Submit" to generate the Sudoku board.
 Now the user can click "Solve (Heuristic)" or "Solve (CSP)" to solve the Sudoku board with the corresponding algorithm.
 
 # Terminal test
-
+To see CSP results directly in the terminal, run test_csp.py.
+Navigate to the line that says "grids_to_run" and assign it a value of the array you want to run [all_9x9, all_12x12,
+all_16x16, all_25x25, and all_100x100]. Then run the file. The results of the board and the computational time 
+will be printed in the terminal.
 
 # File validation:
 For puzzle input files, the program is able to detect the following errors:

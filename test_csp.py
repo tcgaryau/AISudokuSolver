@@ -1720,6 +1720,7 @@ def main():
 
     # CHANGE THIS ARRAY TO RUN DIFFERENT GRIDS
     grids_to_run = all_12x12
+
     for puzzle in grids_to_run:
         csp = CSP(puzzle)
 
