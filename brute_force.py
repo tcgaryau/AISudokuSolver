@@ -1,13 +1,18 @@
 import math
+import copy
+import itertools
 
 
 class BruteForce:
+    """
+    Brute force depth - first searching algorithm.
+    """
 
     def __init__(self, puzzle_data, size_data, row_set, col_set, sub_grid_set):
-        self.puzzle_data = puzzle_data
-        self.row_set = row_set
-        self.col_set = col_set
-        self.sub_grid_set = sub_grid_set
+        self.puzzle_data = copy.deepcopy(puzzle_data)
+        self.row_set = copy.deepcopy(row_set)
+        self.col_set = copy.deepcopy(col_set)
+        self.sub_grid_set = copy.deepcopy(sub_grid_set)
         self.sg_row_total = 0
         self.sg_col_total = 0
         self.size_data = size_data
@@ -16,19 +21,17 @@ class BruteForce:
         self.num_branch_fail = 0
         self.max_fail = size_data * size_data * 1000
 
-    def solve_brute_force(self, is_first=True) -> bool:
+    def solve(self, is_first=True) -> bool:
         """
         Brute force depth - first searching algorithm.
-        In each node, find a valid number to fill the most top-left empty square.
+        In each node, find a valid number to empty square with the least number of options.
         A solution is found if every square on the board is filled.
+        :param is_first: bool: if it is the first time to call the function
         :return: if a solution is found
         """
-        # print(self.num_branch_fail)
 
         self.sg_row_total = int(math.sqrt(self.size_data))
         self.sg_col_total = int(math.ceil(math.sqrt(self.size_data)))
-        # if empty_tuple := self.find_next_empty():
-        #     row, col = empty_tuple
 
         if empty_tuple := self.find_best_empty():
             row, col = empty_tuple
@@ -46,14 +49,16 @@ class BruteForce:
                 self.num_branch_fail = 0
                 continue
 
+            # add the number to the board and its associated sets
             self.puzzle_data[row][col] = num
             self.row_set[row].add(num)
             self.col_set[col].add(num)
             self.sub_grid_set[set_index].add(num)
 
-            if self.solve_brute_force(False):
+            if self.solve(False):
                 return True
 
+            # remove the number from its associated sets
             self.row_set[row].remove(num)
             self.col_set[col].remove(num)
             self.sub_grid_set[set_index].remove(num)
@@ -68,16 +73,21 @@ class BruteForce:
         Get the row and col number of the next empty square on the board.
         :return: a tuple
         """
-        for row in range(self.size_data):
-            for col in range(self.size_data):
-                if self.puzzle_data[row][col] == 0:
-                    return row, col
-        return None
+        return next(
+            (
+                (row, col)
+                for row, col in itertools.product(
+                    range(self.size_data), range(self.size_data)
+                )
+                if self.puzzle_data[row][col] == 0
+            ),
+            None,
+        )
 
     def find_best_empty(self):
         """
         Get the row and col number of the empty square with the least number of options.
-        :return:
+        :return: a tuple or None
         """
 
         min_options = self.size_data + 1
@@ -94,19 +104,30 @@ class BruteForce:
                         min_options = num_options
                         best_row = row
                         best_col = col
-        if best_row is None:
-            return None
-        return best_row, best_col
+        return None if best_row is None else (best_row, best_col)
 
     def get_available_numbers(self, row, col, set_index):
+        """
+        Get a list of numbers that can be used to assign an empty square. An available number must
+        not have been used by other squares in the same row, column, and sub grid of the current
+        square.
+        :param row: row number, int
+        :param col: column number, int
+        :param set_index: sub grid number, int
+        :return: a list of int
+        """
         used_nums = set(
             list(self.row_set[row]) + list(self.col_set[col]) + list(self.sub_grid_set[set_index]))
         all_possible_options = list(range(1, self.size_data + 1))
         return [num for num in all_possible_options if num not in used_nums]
 
     def return_board(self):
-        # print(self.puzzle_data)
+        """
+        Returns solved puzzle data.
+        :return: list of lists
+        """
         return self.puzzle_data
 
     def increase_max_depth(self):
+        """ Increase DFS search depth before fail. """
         self.max_fail = self.max_fail * 1.05
